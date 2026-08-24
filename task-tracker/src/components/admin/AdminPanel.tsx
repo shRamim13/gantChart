@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Shield, Users, Mail, UserMinus, Send } from 'lucide-react'
+import { Shield, Users, Mail, UserMinus, Send, Copy } from 'lucide-react'
 import { useAdminProfiles } from '@/hooks/useAdminProfiles'
 import { useInvitations } from '@/hooks/useInvitations'
 import { useAuth } from '@/components/auth/AuthProvider'
@@ -284,12 +284,23 @@ export function AdminPanel() {
                       </td>
                       <td className="px-4 py-3">
                         {inv.status === 'pending' && (
-                          <button
-                            onClick={() => setRevokeId(inv.id)}
-                            className="rounded-lg px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                          >
-                            Revoke
-                          </button>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(window.location.origin)
+                                toast.success('Link copied! Share it with ' + inv.email)
+                              }}
+                              className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
+                            >
+                              <Copy size={12} /> Copy Link
+                            </button>
+                            <button
+                              onClick={() => setRevokeId(inv.id)}
+                              className="rounded-lg px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                            >
+                              Revoke
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
