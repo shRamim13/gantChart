@@ -78,6 +78,7 @@ export function TaskForm({ open, onClose, onSave, project_id, initialData, nextT
         module_id: initialData?.module_id ?? null,
         assignee_id: initialData?.assignee_id ?? null,
         parent_task_id: initialData?.parent_task_id ?? parentTaskId,
+        sprint_id: initialData?.sprint_id ?? null,
       })
 
       if (result?.error) {

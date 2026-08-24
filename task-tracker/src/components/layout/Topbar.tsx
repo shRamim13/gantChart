@@ -1,4 +1,4 @@
-import { Search, Table, Columns, GanttChart, ArrowUpDown, Plus } from 'lucide-react'
+import { Search, Table, Columns, GanttChart, ArrowUpDown, Plus, Target } from 'lucide-react'
 import type { ViewType, SortField, SortDirection } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +19,7 @@ const views: { value: ViewType; label: string; icon: typeof Table }[] = [
   { value: 'table', label: 'Table', icon: Table },
   { value: 'board', label: 'Board', icon: Columns },
   { value: 'timeline', label: 'Timeline', icon: GanttChart },
+  { value: 'sprints', label: 'Sprints', icon: Target },
 ]
 
 const sortOptions: { value: SortField; label: string }[] = [

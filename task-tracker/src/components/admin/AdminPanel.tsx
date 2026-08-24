@@ -1,9 +1,13 @@
+import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Shield, Users } from 'lucide-react'
+import { Shield, Users, Mail, UserMinus, Send } from 'lucide-react'
 import { useAdminProfiles } from '@/hooks/useAdminProfiles'
+import { useInvitations } from '@/hooks/useInvitations'
 import { useAuth } from '@/components/auth/AuthProvider'
 import type { UserRole } from '@/types'
 import { ROLE_OPTIONS } from '@/types'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { cn } from '@/lib/utils'
 
 const ROLE_COLORS: Record<UserRole, string> = {
   super_admin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
@@ -13,8 +17,18 @@ const ROLE_COLORS: Record<UserRole, string> = {
 }
 
 export function AdminPanel() {
-  const { profiles, loading, updateRole } = useAdminProfiles()
+  const { profiles, loading: profilesLoading, updateRole } = useAdminProfiles()
+  const { invitations, loading: invitesLoading, inviteUser, revokeInvitation, deleteUser } = useInvitations()
   const { profile: currentUser } = useAuth()
+  const [tab, setTab] = useState<'users' | 'invitations'>('users')
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<UserRole>('user')
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
+  const [deleteUserName, setDeleteUserName] = useState('')
+  const [revokeId, setRevokeId] = useState<string | null>(null)
+
+  const canDeleteUsers = currentUser?.role === 'super_admin'
+  const loading = profilesLoading || invitesLoading
 
   async function handleRoleChange(userId: string, newRole: UserRole) {
     if (userId === currentUser?.id) {
@@ -29,12 +43,56 @@ export function AdminPanel() {
     }
   }
 
+  async function handleInvite() {
+    if (!inviteEmail.trim()) {
+      toast.error('Email is required')
+      return
+    }
+
+    const existing = profiles.find((p) => p.email === inviteEmail.trim())
+    if (existing) {
+      toast.error('User already exists')
+      return
+    }
+
+    const result = await inviteUser(inviteEmail.trim(), inviteRole)
+    if (!result.error) {
+      toast.success(`Invitation sent to ${inviteEmail}`)
+      setInviteEmail('')
+      setInviteRole('user')
+    } else {
+      toast.error(result.error)
+    }
+  }
+
+  async function handleDeleteUser() {
+    if (!deleteUserId) return
+    const result = await deleteUser(deleteUserId)
+    if (!result.error) {
+      toast.success('User removed')
+      setDeleteUserId(null)
+    } else {
+      toast.error(result.error)
+    }
+  }
+
+  async function handleRevoke() {
+    if (!revokeId) return
+    const result = await revokeInvitation(revokeId)
+    if (!result.error) {
+      toast.success('Invitation revoked')
+      setRevokeId(null)
+    } else {
+      toast.error(result.error)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-          <p className="text-sm text-gray-400">Loading users...</p>
+          <p className="text-sm text-gray-400">Loading...</p>
         </div>
       </div>
     )
@@ -42,95 +100,244 @@ export function AdminPanel() {
 
   return (
     <div className="h-full overflow-auto p-6">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-5xl">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/30">
             <Shield className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">User Management</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{profiles.length} team members</p>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Manage users and invitations</p>
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">User</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Role</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Change Role</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {profiles.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {user.avatar_url ? (
-                        <img src={user.avatar_url} alt="" className="h-8 w-8 rounded-full" />
-                      ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
-                          {user.name?.charAt(0)?.toUpperCase() ?? 'U'}
-                        </div>
-                      )}
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        {user.name}
-                        {user.id === currentUser?.id && (
-                          <span className="ml-1.5 text-xs text-gray-400">(you)</span>
+        {/* Tabs */}
+        <div className="mb-6 flex gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-gray-800 dark:bg-gray-800/50">
+          <button
+            onClick={() => setTab('users')}
+            className={cn(
+              'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
+              tab === 'users' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+            )}
+          >
+            <Users size={16} /> Users ({profiles.length})
+          </button>
+          <button
+            onClick={() => setTab('invitations')}
+            className={cn(
+              'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
+              tab === 'invitations' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+            )}
+          >
+            <Mail size={16} /> Invitations ({invitations.filter((i) => i.status === 'pending').length})
+          </button>
+        </div>
+
+        {/* Users Tab */}
+        {tab === 'users' && (
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">User</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Role</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {profiles.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {user.avatar_url ? (
+                          <img src={user.avatar_url} alt="" className="h-8 w-8 rounded-full" />
+                        ) : (
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
+                            {user.name?.charAt(0)?.toUpperCase() ?? 'U'}
+                          </div>
                         )}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
-                  <td className="px-4 py-3">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {user.name}
+                          {user.id === currentUser?.id && (
+                            <span className="ml-1.5 text-xs text-gray-400">(you)</span>
+                          )}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
+                    <td className="px-4 py-3">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_COLORS[user.role]}`}>
                         {ROLE_OPTIONS.find(r => r.value === user.role)?.label ?? user.role}
                       </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {user.id !== currentUser?.id ? (
-                      <select
-                        defaultValue={user.role}
-                        onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
-                        className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                      >
-                        {ROLE_OPTIONS.map((r) => (
-                          <option key={r.value} value={r.value}>
-                            {r.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {profiles.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center">
-                    <Users className="mx-auto mb-2 h-8 w-8 text-gray-300 dark:text-gray-600" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">No users found</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {user.id !== currentUser?.id ? (
+                          <select
+                            defaultValue={user.role}
+                            onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
+                            className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                          >
+                            {ROLE_OPTIONS.map((r) => (
+                              <option key={r.value} value={r.value}>{r.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
+                        {canDeleteUsers && user.id !== currentUser?.id && user.role !== 'super_admin' && (
+                          <button
+                            onClick={() => { setDeleteUserId(user.id); setDeleteUserName(user.name) }}
+                            className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                            title="Remove user"
+                          >
+                            <UserMinus size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {profiles.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center">
+                      <Users className="mx-auto mb-2 h-8 w-8 text-gray-300 dark:text-gray-600" />
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No users found</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
 
+        {/* Invitations Tab */}
+        {tab === 'invitations' && (
+          <>
+            {/* Invite Form */}
+            <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              <h3 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Invite New User</h3>
+              <div className="flex gap-3">
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="user@email.com"
+                  className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleInvite() }}
+                />
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as UserRole)}
+                  className="rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                >
+                  {ROLE_OPTIONS.map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleInvite}
+                  className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
+                >
+                  <Send size={14} /> Invite
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+                User will be assigned this role when they sign up via Google or email.
+              </p>
+            </div>
+
+            {/* Invitations List */}
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Email</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Role</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Expires</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {invitations.map((inv) => (
+                    <tr key={inv.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{inv.email}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_COLORS[inv.role]}`}>
+                          {ROLE_OPTIONS.find(r => r.value === inv.role)?.label ?? inv.role}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={cn(
+                          'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+                          inv.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                          inv.status === 'accepted' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                          'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                        )}>
+                          {inv.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-400">
+                        {new Date(inv.expires_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        {inv.status === 'pending' && (
+                          <button
+                            onClick={() => setRevokeId(inv.id)}
+                            className="rounded-lg px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                          >
+                            Revoke
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {invitations.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center">
+                        <Mail className="mx-auto mb-2 h-8 w-8 text-gray-300 dark:text-gray-600" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No invitations yet</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+        {/* Role Permissions */}
         <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/50">
           <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Role Permissions</h3>
           <div className="space-y-1 text-xs text-gray-500 dark:text-gray-400">
             {ROLE_OPTIONS.map((r) => (
               <p key={r.value}>
-                <span className={`mr-1.5 font-medium ${ROLE_COLORS[r.value as UserRole].split(' ').filter(c => c.includes('text')).join(' ')}`}>{r.label}</span>
+                <span className={`mr-1.5 font-medium ${ROLE_COLORS[r.value].split(' ').filter(c => c.includes('text')).join(' ')}`}>{r.label}</span>
                 — {r.description}
               </p>
             ))}
           </div>
         </div>
+
+        <ConfirmDialog
+          open={!!deleteUserId}
+          title={`Remove ${deleteUserName}?`}
+          message="This user will be removed from the system. They can rejoin via invitation."
+          confirmLabel="Remove User"
+          onConfirm={handleDeleteUser}
+          onCancel={() => { setDeleteUserId(null); setDeleteUserName('') }}
+        />
+
+        <ConfirmDialog
+          open={!!revokeId}
+          title="Revoke Invitation"
+          message="This invitation will no longer be valid."
+          confirmLabel="Revoke"
+          onConfirm={handleRevoke}
+          onCancel={() => setRevokeId(null)}
+        />
       </div>
     </div>
   )

@@ -67,6 +67,7 @@ export interface Task {
   module_id: string | null
   assignee_id: string | null
   parent_task_id: string | null
+  sprint_id: string | null
   title: string
   description: string | null
   status: TaskStatus
@@ -109,7 +110,30 @@ export interface ActivityLog {
   created_at: string
 }
 
-export type ViewType = 'table' | 'board' | 'timeline'
+export type SprintStatus = 'planning' | 'active' | 'completed'
+
+export interface Sprint {
+  id: string
+  project_id: string
+  name: string
+  goal: string | null
+  start_date: string
+  end_date: string
+  status: SprintStatus
+  created_at: string
+}
+
+export interface Invitation {
+  id: string
+  email: string
+  role: UserRole
+  invited_by: string
+  status: 'pending' | 'accepted' | 'expired'
+  created_at: string
+  expires_at: string
+}
+
+export type ViewType = 'table' | 'board' | 'timeline' | 'sprints'
 
 export const STATUS_OPTIONS: { value: TaskStatus; label: string; color: string }[] = [
   { value: 'todo', label: 'To Do', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
@@ -141,6 +165,12 @@ export const ROLE_OPTIONS: { value: UserRole; label: string; description: string
   { value: 'admin', label: 'Admin', description: 'Can create projects/epics/tasks. Can edit and delete tasks. Cannot delete projects or epics.' },
   { value: 'user', label: 'User', description: 'Can create tasks and subtasks. Can edit subtasks. Cannot delete anything.' },
   { value: 'viewer', label: 'Viewer', description: 'Read-only access. Cannot create, edit, or delete anything.' },
+]
+
+export const SPRINT_STATUS_OPTIONS: { value: SprintStatus; label: string; color: string }[] = [
+  { value: 'planning', label: 'Planning', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+  { value: 'active', label: 'Active', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+  { value: 'completed', label: 'Completed', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
 ]
 
 export const ROLE_PERMISSIONS = {

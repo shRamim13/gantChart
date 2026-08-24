@@ -10,6 +10,7 @@ import { useEpics } from '@/hooks/useEpics'
 import { TableView } from '@/components/views/TableView'
 import { BoardView } from '@/components/views/BoardView'
 import { TimelineView } from '@/components/views/TimelineView'
+import { SprintBoard } from '@/components/sprints/SprintBoard'
 import { TaskForm } from '@/components/task/TaskForm'
 import { TaskDetailPanel } from '@/components/task/TaskDetailPanel'
 import type { Task, ViewType, SortField, SortDirection } from '@/types'
@@ -185,6 +186,13 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
               onNewTask={handleOpenNewTask}
               searchQuery={searchQuery}
               projectPrefix={projectPrefix}
+            />
+          )}
+          {activeView === 'sprints' && (
+            <SprintBoard
+              projectId={projectId}
+              tasks={tasks}
+              onEditTask={handleEditTask}
             />
           )}
         </>
