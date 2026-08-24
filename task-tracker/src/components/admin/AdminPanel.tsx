@@ -85,9 +85,9 @@ export function AdminPanel() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_COLORS[user.role]}`}>
-                      {user.role}
-                    </span>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_COLORS[user.role]}`}>
+                        {ROLE_OPTIONS.find(r => r.value === user.role)?.label ?? user.role}
+                      </span>
                   </td>
                   <td className="px-4 py-3">
                     {user.id !== currentUser?.id ? (

@@ -4,7 +4,7 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { EpicPanel } from '@/components/epics/EpicPanel'
 import { cn } from '@/lib/utils'
-import { getPermissions } from '@/types'
+import { getPermissions, ROLE_OPTIONS } from '@/types'
 import type { Project } from '@/types'
 
 interface SidebarProps {
@@ -185,7 +185,7 @@ export function Sidebar({ projects, activeProjectId, activeEpicId, activeTab, on
             <div>
               <span className="text-xs text-gray-600 dark:text-gray-400">{profile?.name ?? 'User'}</span>
               <span className="ml-1 rounded bg-gray-100 px-1 py-0.5 text-[9px] text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                {profile?.role}
+                {ROLE_OPTIONS.find(r => r.value === profile?.role)?.label ?? profile?.role}
               </span>
             </div>
           </div>
