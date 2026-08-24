@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Epic } from '@/types'
+import type { UserRole } from '@/types'
 
-export function useEpics(projectId: string | null) {
+export function useEpics(projectId: string | null, userRole?: UserRole) {
   const [epics, setEpics] = useState<Epic[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -36,6 +37,7 @@ export function useEpics(projectId: string | null) {
   }, [fetchEpics])
 
   async function createEpic(name: string, color: string) {
+    if (userRole === 'viewer') return { data: null, error: 'Viewers cannot create epics' }
     try {
       const { data, error } = await supabase
         .from('epics')
@@ -77,6 +79,7 @@ export function useEpics(projectId: string | null) {
   }
 
   async function deleteEpic(id: string) {
+    if (userRole !== 'admin') return { error: 'Only admins can delete epics' }
     try {
       const { error } = await supabase.from('epics').delete().eq('id', id)
       if (error) {

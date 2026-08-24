@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Project } from '@/types'
+import type { UserRole } from '@/types'
 
-export function useProjects() {
+export function useProjects(userRole?: UserRole) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -33,6 +34,7 @@ export function useProjects() {
   }, [fetchProjects])
 
   async function createProject(name: string, shortName: string) {
+    if (userRole === 'viewer') return { data: null, error: 'Viewers cannot create projects' }
     try {
       const insertData: Record<string, unknown> = { name }
       if (shortName) insertData.short_name = shortName.toUpperCase()
@@ -51,6 +53,7 @@ export function useProjects() {
   }
 
   async function deleteProject(id: string) {
+    if (userRole !== 'admin') return { error: 'Only admins can delete projects' }
     try {
       // Try soft delete first
       const { error } = await supabase.from('projects').update({ is_deleted: true }).eq('id', id)

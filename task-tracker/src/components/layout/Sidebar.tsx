@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FolderOpen, LayoutGrid, Sun, Moon, LogOut, Plus, Trash2, X } from 'lucide-react'
+import { FolderOpen, LayoutGrid, Sun, Moon, LogOut, Plus, Trash2, X, Shield } from 'lucide-react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { EpicPanel } from '@/components/epics/EpicPanel'
@@ -10,15 +10,17 @@ interface SidebarProps {
   projects: Project[]
   activeProjectId: string | null
   activeEpicId: string | null
+  activeTab: 'projects' | 'admin'
   onSelectProject: (id: string) => void
   onSelectEpic: (id: string | null) => void
+  onSelectTab: (tab: 'projects' | 'admin') => void
   onCreateProject: (name: string, shortName: string) => void
   onDeleteProject: (id: string) => void
   darkMode: boolean
   onToggleDark: () => void
 }
 
-export function Sidebar({ projects, activeProjectId, activeEpicId, onSelectProject, onSelectEpic, onCreateProject, onDeleteProject, darkMode, onToggleDark }: SidebarProps) {
+export function Sidebar({ projects, activeProjectId, activeEpicId, activeTab, onSelectProject, onSelectEpic, onSelectTab, onCreateProject, onDeleteProject, darkMode, onToggleDark }: SidebarProps) {
   const { profile, signOut } = useAuth()
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
@@ -145,12 +147,29 @@ export function Sidebar({ projects, activeProjectId, activeEpicId, onSelectProje
           </div>
         </div>
 
-        {activeProjectId && (
+        {activeProjectId && activeTab === 'projects' && (
           <EpicPanel
             projectId={activeProjectId}
             activeEpicId={activeEpicId}
             onSelectEpic={onSelectEpic}
           />
+        )}
+
+        {canManageProjects && (
+          <div className="px-2 py-2">
+            <button
+              onClick={() => onSelectTab(activeTab === 'admin' ? 'projects' : 'admin')}
+              className={cn(
+                'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors',
+                activeTab === 'admin'
+                  ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+              )}
+            >
+              <Shield size={16} />
+              <span>Admin</span>
+            </button>
+          </div>
         )}
       </div>
 

@@ -4,6 +4,7 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { useProjects } from '@/hooks/useProjects'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
+import { AdminPanel } from '@/components/admin/AdminPanel'
 import type { ViewType, SortField, SortDirection } from '@/types'
 
 interface AppLayoutProps {
@@ -20,7 +21,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { profile } = useAuth()
-  const { projects, createProject, deleteProject } = useProjects()
+  const { projects, createProject, deleteProject } = useProjects(profile?.role)
   const canCreateTask = profile?.role === 'admin' || profile?.role === 'editor'
   const [activeProjectId, setActiveProjectId] = useState<string | null>(projects[0]?.id ?? null)
   const [activeEpicId, setActiveEpicId] = useState<string | null>(null)
@@ -28,6 +29,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortField, setSortField] = useState<SortField>('created_at')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [activeTab, setActiveTab] = useState<'projects' | 'admin'>('projects')
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('darkMode') === 'true' ||
@@ -101,39 +103,47 @@ export function AppLayout({ children }: AppLayoutProps) {
         projects={projects}
         activeProjectId={activeProjectId}
         activeEpicId={activeEpicId}
+        activeTab={activeTab}
         onSelectProject={handleSelectProject}
         onSelectEpic={setActiveEpicId}
+        onSelectTab={setActiveTab}
         onCreateProject={handleCreateProject}
         onDeleteProject={handleDeleteProject}
         darkMode={darkMode}
         onToggleDark={toggleDark}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
-        {activeProjectId && activeProject && (
-          <Topbar
-            projectName={activeProject.name}
-            activeView={activeView}
-            onViewChange={setActiveView}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSortChange={handleSortChange}
-            onNewTask={handleNewTask}
-            canCreateTask={canCreateTask}
-          />
+        {activeTab === 'admin' ? (
+          <AdminPanel />
+        ) : (
+          <>
+            {activeProjectId && activeProject && (
+              <Topbar
+                projectName={activeProject.name}
+                activeView={activeView}
+                onViewChange={setActiveView}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                sortField={sortField}
+                sortDirection={sortDirection}
+                onSortChange={handleSortChange}
+                onNewTask={handleNewTask}
+                canCreateTask={canCreateTask}
+              />
+            )}
+            <main className="flex-1 overflow-auto">
+              {activeProjectId ? (
+                children({ projectId: activeProjectId, epicId: activeEpicId, searchQuery, activeView, sortField, sortDirection, onNewTask: handleNewTask })
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-gray-500 dark:text-gray-400">Click + next to Projects to create one</p>
+                  </div>
+                </div>
+              )}
+            </main>
+          </>
         )}
-        <main className="flex-1 overflow-auto">
-          {activeProjectId ? (
-            children({ projectId: activeProjectId, epicId: activeEpicId, searchQuery, activeView, sortField, sortDirection, onNewTask: handleNewTask })
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <div className="text-center">
-                <p className="text-gray-500 dark:text-gray-400">Click + next to Projects to create one</p>
-              </div>
-            </div>
-          )}
-        </main>
       </div>
     </div>
   )
