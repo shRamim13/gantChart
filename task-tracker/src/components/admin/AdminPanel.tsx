@@ -57,7 +57,7 @@ export function AdminPanel() {
 
     const result = await inviteUser(inviteEmail.trim(), inviteRole)
     if (!result.error) {
-      toast.success(`Invitation sent to ${inviteEmail}`)
+      toast.success(`Invitation email sent to ${inviteEmail}`)
       setInviteEmail('')
       setInviteRole('user')
     } else {

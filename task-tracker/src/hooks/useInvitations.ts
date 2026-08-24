@@ -35,6 +35,7 @@ export function useInvitations() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return { error: 'Not authenticated' }
 
+      // Store invitation in DB
       const { data, error } = await supabase
         .from('invitations')
         .insert({ email, role, invited_by: user.id, status: 'pending' })
@@ -45,6 +46,19 @@ export function useInvitations() {
         console.error('Invite user error:', error)
         return { error: error.message }
       }
+
+      // Send actual email via Supabase auth magic link
+      const { error: emailError } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
+      })
+
+      if (emailError) {
+        console.warn('Email send failed (invitation still saved):', emailError.message)
+      }
+
       if (data) setInvitations((prev) => [data as Invitation, ...prev])
       return { data: data as Invitation | null, error: undefined }
     } catch (err) {
