@@ -60,9 +60,10 @@ interface ProjectContentViewProps {
 }
 
 function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortField, sortDirection }: ProjectContentViewProps) {
-  const { tasks, loading, createTask, updateTask, deleteTask, nextTicketNumber } = useTasks(projectId)
-  const { projects } = useProjects()
-  const { epics } = useEpics(projectId)
+  const { profile } = useAuth()
+  const { tasks, loading, createTask, updateTask, deleteTask, nextTicketNumber } = useTasks(projectId, profile?.role)
+  const { projects } = useProjects(profile?.role)
+  const { epics } = useEpics(projectId, profile?.role)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showForm, setShowForm] = useState(false)
