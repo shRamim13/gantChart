@@ -56,11 +56,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!data) {
         const user = await supabase.auth.getUser()
         if (user.data.user) {
+          // Check if any profiles exist - first user becomes admin
+          const { count } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+
+          const isFirstUser = !count || count === 0
+
           const newProfile = {
             id: userId,
             name: user.data.user.user_metadata?.full_name || user.data.user.email?.split('@')[0] || 'User',
             email: user.data.user.email || '',
-            role: 'editor' as const,
+            role: (isFirstUser ? 'admin' : 'editor') as 'admin' | 'editor',
             avatar_url: user.data.user.user_metadata?.avatar_url || null,
           }
           await supabase.from('profiles').insert(newProfile)

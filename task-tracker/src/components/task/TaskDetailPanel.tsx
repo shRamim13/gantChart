@@ -29,7 +29,7 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const canEdit = profile?.role === 'admin' || profile?.role === 'editor'
-  const canDelete = profile?.role === 'admin'
+  const canDelete = profile?.role === 'admin' || profile?.role === 'editor'
 
   if (!task) return null
 

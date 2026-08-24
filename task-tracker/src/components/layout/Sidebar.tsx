@@ -28,7 +28,7 @@ export function Sidebar({ projects, activeProjectId, activeEpicId, activeTab, on
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const canManageProjects = profile?.role === 'admin'
+  const canManageProjects = profile?.role === 'admin' || profile?.role === 'editor'
 
   function handleCreate() {
     if (newName.trim() && newShortName.trim()) {

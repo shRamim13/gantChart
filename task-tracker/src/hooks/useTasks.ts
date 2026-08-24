@@ -169,7 +169,7 @@ export function useTasks(projectId: string | null, userRole?: UserRole) {
   }
 
   async function deleteTask(id: string) {
-    if (userRole !== 'admin') return { error: 'Only admins can delete tasks' }
+    if (userRole === 'viewer') return { error: 'Viewers cannot delete tasks' }
     try {
       // Try soft delete first
       const { error } = await supabase.from('tasks').update({ is_deleted: true }).eq('id', id)

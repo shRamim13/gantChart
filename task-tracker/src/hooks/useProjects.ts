@@ -53,7 +53,7 @@ export function useProjects(userRole?: UserRole) {
   }
 
   async function deleteProject(id: string) {
-    if (userRole !== 'admin') return { error: 'Only admins can delete projects' }
+    if (userRole === 'viewer') return { error: 'Viewers cannot delete projects' }
     try {
       // Try soft delete first
       const { error } = await supabase.from('projects').update({ is_deleted: true }).eq('id', id)
