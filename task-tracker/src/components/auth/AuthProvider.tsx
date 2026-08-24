@@ -73,7 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .select('*', { count: 'exact', head: true })
 
           const isFirstUser = !count || count === 0
-          const userRole = isFirstUser ? 'super_admin' : (invitation?.role || 'user')
+
+          // Only invited users or first user get active automatically
+          const hasInvitation = !!invitation || isFirstUser
+          const userRole = isFirstUser ? 'super_admin' : (invitation?.role || 'viewer')
 
           // Mark invitation as accepted
           if (invitation) {
@@ -86,18 +89,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email,
             role: userRole as 'super_admin' | 'admin' | 'user' | 'viewer',
             avatar_url: user.data.user.user_metadata?.avatar_url || null,
-            is_active: true,
+            is_active: hasInvitation,
           }
           await supabase.from('profiles').insert(newProfile)
           setProfile(newProfile)
         }
       } else {
         const profile = data as Profile
-        // Block inactive users
+        // Block inactive users (not approved by admin yet)
         if (profile.is_active === false) {
-          await supabase.auth.signOut()
-          setProfile(null)
-          setUser(null)
+          setProfile(profile)
           setLoading(false)
           return
         }

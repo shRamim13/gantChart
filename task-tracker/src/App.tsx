@@ -17,7 +17,7 @@ import { TaskDetailPanel } from '@/components/task/TaskDetailPanel'
 import type { Task, ViewType, SortField, SortDirection } from '@/types'
 
 function MainContent() {
-  const { user, loading } = useAuth()
+  const { user, profile, loading, signOut } = useAuth()
 
   if (loading) {
     return (
@@ -31,6 +31,34 @@ function MainContent() {
   }
 
   if (!user) return <LoginPage />
+
+  // User logged in but not approved by admin yet
+  if (profile && profile.is_active === false) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 via-orange-50/30 to-gray-50 dark:from-gray-950 dark:via-orange-950/10 dark:to-gray-950">
+        <div className="w-full max-w-sm px-4 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-100 dark:bg-orange-900/30">
+            <svg className="h-8 w-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Waiting for Approval</h1>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Your account (<span className="font-medium text-gray-700 dark:text-gray-300">{profile.email}</span>) is pending admin approval.
+          </p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Please contact your team admin to get access.
+          </p>
+          <button
+            onClick={signOut}
+            className="mt-6 rounded-xl bg-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return <AuthenticatedApp />
 }

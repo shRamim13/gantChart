@@ -136,7 +136,7 @@ export function AdminPanel() {
               tab === 'users' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
             )}
           >
-            <Users size={16} /> Users ({profiles.length})
+            <Users size={16} /> Users ({profiles.length}{profiles.filter((p) => p.is_active === false).length > 0 ? `, ${profiles.filter((p) => p.is_active === false).length} pending` : ''})
           </button>
           <button
             onClick={() => setTab('invitations')}
@@ -183,8 +183,8 @@ export function AdminPanel() {
                             )}
                           </span>
                           {isInactive && (
-                            <span className="ml-2 inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                              Inactive
+                            <span className="ml-2 inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                              Pending Approval
                             </span>
                           )}
                         </div>
