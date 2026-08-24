@@ -269,7 +269,7 @@ function KanbanColumn({
       <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
         <div className="flex-1 space-y-2">
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} onSelect={() => onTaskSelect(task)} projectPrefix={projectPrefix} />
+            <TaskCard key={task.id} task={task} onSelect={() => onTaskSelect(task)} projectPrefix={projectPrefix} profiles={profiles} />
           ))}
         </div>
       </SortableContext>
@@ -353,6 +353,7 @@ export function BoardView({ tasks, profiles, onUpdateTask, onSelectTask, searchQ
               tasks={tasksByStatus[option.value]}
               onTaskSelect={handleTaskClick}
               projectPrefix={projectPrefix}
+              profiles={profiles}
             />
           ))}
         </div>
