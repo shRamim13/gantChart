@@ -86,12 +86,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email,
             role: userRole as 'super_admin' | 'admin' | 'user' | 'viewer',
             avatar_url: user.data.user.user_metadata?.avatar_url || null,
+            is_active: true,
           }
           await supabase.from('profiles').insert(newProfile)
           setProfile(newProfile)
         }
       } else {
-        setProfile(data as Profile)
+        const profile = data as Profile
+        // Block inactive users
+        if (profile.is_active === false) {
+          await supabase.auth.signOut()
+          setProfile(null)
+          setUser(null)
+          setLoading(false)
+          return
+        }
+        setProfile(profile)
       }
     } catch (err) {
       console.error('Profile fetch error:', err)
