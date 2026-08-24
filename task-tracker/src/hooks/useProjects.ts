@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Project } from '@/types'
 import type { UserRole } from '@/types'
+import { getPermissions } from '@/types'
 
 export function useProjects(userRole?: UserRole) {
+  const perms = userRole ? getPermissions(userRole) : getPermissions('viewer')
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -34,7 +36,7 @@ export function useProjects(userRole?: UserRole) {
   }, [fetchProjects])
 
   async function createProject(name: string, shortName: string) {
-    if (userRole === 'viewer') return { data: null, error: 'Viewers cannot create projects' }
+    if (!perms.canCreateProject) return { data: null, error: 'You do not have permission to create projects' }
     try {
       const insertData: Record<string, unknown> = { name }
       if (shortName) insertData.short_name = shortName.toUpperCase()
@@ -53,7 +55,7 @@ export function useProjects(userRole?: UserRole) {
   }
 
   async function deleteProject(id: string) {
-    if (userRole !== 'admin') return { error: 'Only admins can delete projects' }
+    if (!perms.canDeleteProject) return { error: 'You do not have permission to delete projects' }
     try {
       // Try soft delete first
       const { error } = await supabase.from('projects').update({ is_deleted: true }).eq('id', id)

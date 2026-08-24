@@ -56,11 +56,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!data) {
         const user = await supabase.auth.getUser()
         if (user.data.user) {
+          const email = user.data.user.email || ''
+
+          // Check for pending invitation
+          const { data: invitation } = await supabase
+            .from('invitations')
+            .select('role')
+            .eq('email', email)
+            .eq('status', 'pending')
+            .gt('expires_at', new Date().toISOString())
+            .single()
+
+          // Check if any profiles exist - first user becomes super_admin
+          const { count } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+
+          const isFirstUser = !count || count === 0
+          const userRole = isFirstUser ? 'super_admin' : (invitation?.role || 'user')
+
+          // Mark invitation as accepted
+          if (invitation) {
+            await supabase.from('invitations').update({ status: 'accepted' }).eq('email', email)
+          }
+
           const newProfile = {
             id: userId,
-            name: user.data.user.user_metadata?.full_name || user.data.user.email?.split('@')[0] || 'User',
-            email: user.data.user.email || '',
-            role: 'editor' as const,
+            name: user.data.user.user_metadata?.full_name || email.split('@')[0] || 'User',
+            email,
+            role: userRole as 'super_admin' | 'admin' | 'user' | 'viewer',
             avatar_url: user.data.user.user_metadata?.avatar_url || null,
           }
           await supabase.from('profiles').insert(newProfile)

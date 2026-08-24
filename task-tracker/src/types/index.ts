@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'editor' | 'viewer'
+export type UserRole = 'super_admin' | 'admin' | 'user' | 'viewer'
 
 export interface Profile {
   id: string
@@ -67,6 +67,7 @@ export interface Task {
   module_id: string | null
   assignee_id: string | null
   parent_task_id: string | null
+  sprint_id: string | null
   title: string
   description: string | null
   status: TaskStatus
@@ -109,7 +110,30 @@ export interface ActivityLog {
   created_at: string
 }
 
-export type ViewType = 'table' | 'board' | 'timeline'
+export type SprintStatus = 'planning' | 'active' | 'completed'
+
+export interface Sprint {
+  id: string
+  project_id: string
+  name: string
+  goal: string | null
+  start_date: string
+  end_date: string
+  status: SprintStatus
+  created_at: string
+}
+
+export interface Invitation {
+  id: string
+  email: string
+  role: UserRole
+  invited_by: string
+  status: 'pending' | 'accepted' | 'expired'
+  created_at: string
+  expires_at: string
+}
+
+export type ViewType = 'table' | 'board' | 'timeline' | 'sprints'
 
 export const STATUS_OPTIONS: { value: TaskStatus; label: string; color: string }[] = [
   { value: 'todo', label: 'To Do', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
@@ -137,7 +161,77 @@ export const TASK_TYPE_OPTIONS: { value: TaskType; label: string; color: string 
 ]
 
 export const ROLE_OPTIONS: { value: UserRole; label: string; description: string }[] = [
-  { value: 'admin', label: 'Admin', description: 'Full access. Can manage users, projects, and delete anything.' },
-  { value: 'editor', label: 'Editor', description: 'Can create and edit tasks, projects.' },
-  { value: 'viewer', label: 'Viewer', description: 'Read-only access. Cannot create or edit.' },
+  { value: 'super_admin', label: 'Super Admin', description: 'Full access. Can create/delete projects, epics, tasks, and manage users.' },
+  { value: 'admin', label: 'Admin', description: 'Can create projects/epics/tasks. Can edit and delete tasks. Cannot delete projects or epics.' },
+  { value: 'user', label: 'User', description: 'Can create tasks and subtasks. Can edit subtasks. Cannot delete anything.' },
+  { value: 'viewer', label: 'Viewer', description: 'Read-only access. Cannot create, edit, or delete anything.' },
 ]
+
+export const SPRINT_STATUS_OPTIONS: { value: SprintStatus; label: string; color: string }[] = [
+  { value: 'planning', label: 'Planning', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+  { value: 'active', label: 'Active', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+  { value: 'completed', label: 'Completed', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+]
+
+export const ROLE_PERMISSIONS = {
+  super_admin: {
+    canCreateProject: true,
+    canDeleteProject: true,
+    canCreateEpic: true,
+    canEditEpic: true,
+    canDeleteEpic: true,
+    canCreateTask: true,
+    canEditTask: true,
+    canDeleteTask: true,
+    canCreateSubtask: true,
+    canEditSubtask: true,
+    canDeleteSubtask: true,
+    canManageUsers: true,
+  },
+  admin: {
+    canCreateProject: true,
+    canDeleteProject: false,
+    canCreateEpic: true,
+    canEditEpic: true,
+    canDeleteEpic: false,
+    canCreateTask: true,
+    canEditTask: true,
+    canDeleteTask: true,
+    canCreateSubtask: true,
+    canEditSubtask: true,
+    canDeleteSubtask: true,
+    canManageUsers: true,
+  },
+  user: {
+    canCreateProject: false,
+    canDeleteProject: false,
+    canCreateEpic: false,
+    canEditEpic: false,
+    canDeleteEpic: false,
+    canCreateTask: true,
+    canEditTask: true,
+    canDeleteTask: false,
+    canCreateSubtask: true,
+    canEditSubtask: true,
+    canDeleteSubtask: false,
+    canManageUsers: false,
+  },
+  viewer: {
+    canCreateProject: false,
+    canDeleteProject: false,
+    canCreateEpic: false,
+    canEditEpic: false,
+    canDeleteEpic: false,
+    canCreateTask: false,
+    canEditTask: false,
+    canDeleteTask: false,
+    canCreateSubtask: false,
+    canEditSubtask: false,
+    canDeleteSubtask: false,
+    canManageUsers: false,
+  },
+} as const
+
+export function getPermissions(role: UserRole) {
+  return ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS.viewer
+}

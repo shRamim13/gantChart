@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Task, TaskStatus, TaskPriority } from '@/types'
 import type { UserRole } from '@/types'
+import { getPermissions } from '@/types'
 
 export function useTasks(projectId: string | null, userRole?: UserRole) {
+  const perms = userRole ? getPermissions(userRole) : getPermissions('viewer')
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -74,7 +76,7 @@ export function useTasks(projectId: string | null, userRole?: UserRole) {
   }, [projectId])
 
   async function createTask(task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'is_deleted' | 'ticket_number'>) {
-    if (userRole === 'viewer') return { data: null, error: 'Viewers cannot create tasks' }
+    if (!perms.canCreateTask) return { data: null, error: 'You do not have permission to create tasks' }
     try {
       let ticketNumber = 1
       try {
@@ -133,7 +135,7 @@ export function useTasks(projectId: string | null, userRole?: UserRole) {
   }
 
   async function updateTask(id: string, updates: Partial<Task>) {
-    if (userRole === 'viewer') return { data: null, error: 'Viewers cannot update tasks' }
+    if (!perms.canEditTask) return { data: null, error: 'You do not have permission to edit tasks' }
     try {
       const safeUpdates: Record<string, unknown> = {}
       if (updates.title !== undefined) safeUpdates.title = updates.title
@@ -169,7 +171,7 @@ export function useTasks(projectId: string | null, userRole?: UserRole) {
   }
 
   async function deleteTask(id: string) {
-    if (userRole !== 'admin') return { error: 'Only admins can delete tasks' }
+    if (!perms.canDeleteTask) return { error: 'You do not have permission to delete tasks' }
     try {
       // Try soft delete first
       const { error } = await supabase.from('tasks').update({ is_deleted: true }).eq('id', id)

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
-import type { Task, TaskStatus, TaskType, SortField, SortDirection, Epic } from '@/types'
+import type { Task, TaskStatus, TaskType, SortField, SortDirection, Epic, Sprint } from '@/types'
 import { TASK_TYPE_OPTIONS, STATUS_OPTIONS } from '@/types'
 import { PriorityIcon } from '@/components/ui/PriorityIcon'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -14,6 +14,7 @@ interface TableViewProps {
   sortDirection: SortDirection
   projectPrefix: string
   epics: Epic[]
+  sprints: Sprint[]
   allTasks: Task[]
   onEditTask: (task: Task) => void
   onDeleteTask: (taskId: string) => void
@@ -36,7 +37,7 @@ function SubtaskProgress({ childTasks }: { childTasks: Task[] }) {
   )
 }
 
-export function TableView({ tasks, sortField, sortDirection, projectPrefix, epics, onEditTask, onDeleteTask, onStatusChange, onSelectTask }: TableViewProps) {
+export function TableView({ tasks, sortField, sortDirection, projectPrefix, epics, sprints, onEditTask, onDeleteTask, onStatusChange, onSelectTask }: TableViewProps) {
   const [editingCell, setEditingCell] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [page, setPage] = useState(0)
@@ -98,6 +99,7 @@ export function TableView({ tasks, sortField, sortDirection, projectPrefix, epic
                 <div className="flex items-center gap-1">Type <SortIndicator field="task_type" /></div>
               </th>
               <th className="px-3 py-3 font-medium text-gray-500 dark:text-gray-400">Epic</th>
+              <th className="px-3 py-3 font-medium text-gray-500 dark:text-gray-400">Sprint</th>
               <th className="px-3 py-3 font-medium text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-1">Status <SortIndicator field="status" /></div>
               </th>
@@ -117,7 +119,7 @@ export function TableView({ tasks, sortField, sortDirection, projectPrefix, epic
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-3 py-12 text-center text-gray-400 dark:text-gray-500">
+                <td colSpan={11} className="px-3 py-12 text-center text-gray-400 dark:text-gray-500">
                   No tasks yet. Create your first task!
                 </td>
               </tr>
@@ -149,6 +151,15 @@ export function TableView({ tasks, sortField, sortDirection, projectPrefix, epic
                         <span className="inline-flex items-center gap-1 text-xs">
                           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: epic.color }} />
                           <span className="text-gray-600 dark:text-gray-400 truncate max-w-[100px]">{epic.name}</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {task.sprint_id ? (
+                        <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400">
+                          {sprints.find((s) => s.id === task.sprint_id)?.name || 'Sprint'}
                         </span>
                       ) : (
                         <span className="text-xs text-gray-400">—</span>

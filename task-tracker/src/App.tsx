@@ -7,9 +7,11 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { useTasks } from '@/hooks/useTasks'
 import { useProjects } from '@/hooks/useProjects'
 import { useEpics } from '@/hooks/useEpics'
+import { useSprints } from '@/hooks/useSprints'
 import { TableView } from '@/components/views/TableView'
 import { BoardView } from '@/components/views/BoardView'
 import { TimelineView } from '@/components/views/TimelineView'
+import { SprintBoard } from '@/components/sprints/SprintBoard'
 import { TaskForm } from '@/components/task/TaskForm'
 import { TaskDetailPanel } from '@/components/task/TaskDetailPanel'
 import type { Task, ViewType, SortField, SortDirection } from '@/types'
@@ -64,6 +66,7 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
   const { tasks, loading, createTask, updateTask, deleteTask, nextTicketNumber } = useTasks(projectId, profile?.role)
   const { projects } = useProjects(profile?.role)
   const { epics } = useEpics(projectId, profile?.role)
+  const { sprints } = useSprints(projectId)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -155,6 +158,7 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
               sortDirection={sortDirection}
               projectPrefix={projectPrefix}
               epics={epics}
+              sprints={sprints}
               onEditTask={handleEditTask}
               onDeleteTask={async (id) => {
                 const result = await deleteTask(id)
@@ -185,6 +189,13 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
               onNewTask={handleOpenNewTask}
               searchQuery={searchQuery}
               projectPrefix={projectPrefix}
+            />
+          )}
+          {activeView === 'sprints' && (
+            <SprintBoard
+              projectId={projectId}
+              tasks={tasks}
+              onEditTask={handleEditTask}
             />
           )}
         </>
