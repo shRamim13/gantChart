@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import toast from 'react-hot-toast'
-import { Plus, Calendar, Target, Trash2, Play, CheckCircle, Clock } from 'lucide-react'
+import { Plus, Calendar, Target, Trash2, Play, CheckCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useSprints } from '@/hooks/useSprints'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getPermissions, SPRINT_STATUS_OPTIONS } from '@/types'
@@ -27,8 +27,17 @@ export function SprintBoard({ projectId, tasks, onEditTask }: SprintBoardProps) 
   const [formStart, setFormStart] = useState('')
   const [formEnd, setFormEnd] = useState('')
   const [formStatus, setFormStatus] = useState<SprintStatus>('planning')
+  const [sprintPage, setSprintPage] = useState(0)
+  const SPRINT_PAGE_SIZE = 15
 
   const canManage = perms.canCreateTask
+
+  const sortedSprints = useMemo(() => {
+    return [...sprints].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  }, [sprints])
+
+  const totalPages = Math.ceil(sortedSprints.length / SPRINT_PAGE_SIZE)
+  const paginatedSprints = sortedSprints.slice(sprintPage * SPRINT_PAGE_SIZE, (sprintPage + 1) * SPRINT_PAGE_SIZE)
 
   const unassignedTasks = tasks.filter((t) => !t.sprint_id && !t.parent_task_id)
 
@@ -252,7 +261,7 @@ export function SprintBoard({ projectId, tasks, onEditTask }: SprintBoardProps) 
 
         {/* Sprint Cards */}
         <div className="space-y-4">
-          {sprints.map((sprint) => {
+          {paginatedSprints.map((sprint) => {
             const sprintTasks = tasks.filter((t) => t.sprint_id === sprint.id)
             const doneTasks = sprintTasks.filter((t) => t.status === 'done')
             const progress = sprintTasks.length > 0 ? Math.round((doneTasks.length / sprintTasks.length) * 100) : 0
@@ -393,6 +402,30 @@ export function SprintBoard({ projectId, tasks, onEditTask }: SprintBoardProps) 
               <Target className="mb-3 h-10 w-10 text-gray-300 dark:text-gray-600" />
               <p className="text-sm text-gray-500 dark:text-gray-400">No sprints yet</p>
               <p className="text-xs text-gray-400 dark:text-gray-500">Create your first sprint to get started</p>
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                {sortedSprints.length} sprints • Page {sprintPage + 1} of {totalPages}
+              </span>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setSprintPage((p) => Math.max(0, p - 1))}
+                  disabled={sprintPage === 0}
+                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-800"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={() => setSprintPage((p) => Math.min(totalPages - 1, p + 1))}
+                  disabled={sprintPage >= totalPages - 1}
+                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-800"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
           )}
         </div>

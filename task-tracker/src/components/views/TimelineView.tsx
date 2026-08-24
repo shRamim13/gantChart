@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { format, differenceInCalendarDays, parseISO, isToday, isBefore, startOfDay } from 'date-fns'
-import type { Task } from '@/types'
+import type { Task, SortDirection } from '@/types'
 import { TASK_TYPE_OPTIONS } from '@/types'
 import { PriorityIcon } from '@/components/ui/PriorityIcon'
 import { cn } from '@/lib/utils'
@@ -14,6 +14,21 @@ interface TimelineViewProps {
 }
 
 export function TimelineView({ tasks, onSelectTask, onNewTask, searchQuery, projectPrefix }: TimelineViewProps) {
+  const [sortField, setSortField] = useState<'start_date' | 'due_date' | 'priority' | 'status' | 'title'>('start_date')
+  const [sortDir, setSortDir] = useState<SortDirection>('asc')
+
+  function toggleSort(field: typeof sortField) {
+    if (sortField === field) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDir('asc')
+    }
+  }
+
+  const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+  const statusOrder: Record<string, number> = { in_progress: 0, todo: 1, qa_test: 2, hold: 3, done: 4 }
+
   const filteredTasks = useMemo(() => {
     const result = searchQuery
       ? tasks.filter(
@@ -23,8 +38,19 @@ export function TimelineView({ tasks, onSelectTask, onNewTask, searchQuery, proj
             `${projectPrefix}-${t.ticket_number}`.toLowerCase().includes(searchQuery.toLowerCase())
         )
       : tasks
-    return result.filter((t) => t.start_date && t.due_date).sort((a, b) => new Date(a.start_date!).getTime() - new Date(b.start_date!).getTime())
-  }, [tasks, searchQuery, projectPrefix])
+
+    return result
+      .filter((t) => t.start_date && t.due_date)
+      .sort((a, b) => {
+        let cmp = 0
+        if (sortField === 'start_date') cmp = new Date(a.start_date!).getTime() - new Date(b.start_date!).getTime()
+        else if (sortField === 'due_date') cmp = new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime()
+        else if (sortField === 'priority') cmp = (priorityOrder[a.priority] ?? 99) - (priorityOrder[b.priority] ?? 99)
+        else if (sortField === 'status') cmp = (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99)
+        else if (sortField === 'title') cmp = a.title.localeCompare(b.title)
+        return sortDir === 'desc' ? -cmp : cmp
+      })
+  }, [tasks, searchQuery, projectPrefix, sortField, sortDir])
 
   // Build month blocks
   const monthBlocks = useMemo(() => {
@@ -113,6 +139,26 @@ export function TimelineView({ tasks, onSelectTask, onNewTask, searchQuery, proj
   return (
     <div className="h-full overflow-auto">
       <div className="min-w-[1000px] p-6">
+        {/* Sort controls */}
+        <div className="mb-4 flex items-center gap-2">
+          <span className="text-xs text-gray-400 dark:text-gray-500">Sort:</span>
+          {(['start_date', 'due_date', 'priority', 'status', 'title'] as const).map((field) => (
+            <button
+              key={field}
+              onClick={() => toggleSort(field)}
+              className={cn(
+                'rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all',
+                sortField === field
+                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+                  : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+              )}
+            >
+              {field === 'start_date' ? 'Start' : field === 'due_date' ? 'Due' : field === 'title' ? 'Name' : field.charAt(0).toUpperCase() + field.slice(1)}
+              {sortField === field && (sortDir === 'asc' ? ' ↑' : ' ↓')}
+            </button>
+          ))}
+        </div>
+
         {/* Month headers */}
         <div className="flex border-b border-gray-200 dark:border-gray-700" style={{ marginLeft: 240 }}>
           {monthBlocks.map((block, i) => {
