@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
   DndContext,
-  closestCenter,
+  closestCorners,
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
   type DragEndEvent,
 } from '@dnd-kit/core'
 import {
@@ -260,14 +261,22 @@ function KanbanColumn({
   projectPrefix: string
   profiles: Profile[]
 }) {
+  const { setNodeRef, isOver } = useDroppable({ id: status })
+
   return (
-    <div className="flex min-w-0 flex-1 flex-col">
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'flex min-w-0 flex-1 flex-col rounded-xl transition-colors',
+        isOver ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''
+      )}
+    >
       <div className="mb-3 flex items-center gap-2">
         <StatusBadge status={status} />
         <span className="text-xs text-gray-400 dark:text-gray-500">{tasks.length}</span>
       </div>
       <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 space-y-2 min-h-[60px]">
           {tasks.map((task) => (
             <TaskCard key={task.id} task={task} onSelect={() => onTaskSelect(task)} projectPrefix={projectPrefix} profiles={profiles} />
           ))}
@@ -344,7 +353,7 @@ export function BoardView({ tasks, profiles, onUpdateTask, onSelectTask, searchQ
 
   return (
     <>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 p-6">
           {STATUS_OPTIONS.map((option) => (
             <KanbanColumn
