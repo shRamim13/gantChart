@@ -44,6 +44,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Watch for profile changes (deactivation by admin)
+  useEffect(() => {
+    if (!user) return
+
+    const channel = supabase
+      .channel('profile-changes-' + user.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .on('postgres_changes' as any, { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload: any) => {
+        const updated = payload.new as Profile
+        if (updated.is_active === false) {
+          supabase.auth.signOut()
+          setUser(null)
+          setProfile(null)
+        } else {
+          setProfile(updated)
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user])
+
   async function fetchProfile(userId: string) {
     try {
       const { data } = await supabase
@@ -73,7 +97,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .select('*', { count: 'exact', head: true })
 
           const isFirstUser = !count || count === 0
-          const userRole = isFirstUser ? 'super_admin' : (invitation?.role || 'user')
+
+          // Only invited users or first user get active automatically
+          const hasInvitation = !!invitation || isFirstUser
+          const userRole = isFirstUser ? 'super_admin' : (invitation?.role || 'viewer')
 
           // Mark invitation as accepted
           if (invitation) {
@@ -86,12 +113,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email,
             role: userRole as 'super_admin' | 'admin' | 'user' | 'viewer',
             avatar_url: user.data.user.user_metadata?.avatar_url || null,
+            is_active: hasInvitation,
           }
           await supabase.from('profiles').insert(newProfile)
           setProfile(newProfile)
         }
       } else {
-        setProfile(data as Profile)
+        const profile = data as Profile
+        // Block inactive users (not approved by admin yet)
+        if (profile.is_active === false) {
+          setProfile(profile)
+          setLoading(false)
+          return
+        }
+        setProfile(profile)
       }
     } catch (err) {
       console.error('Profile fetch error:', err)

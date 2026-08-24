@@ -15,7 +15,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, Clock, Calendar, X } from 'lucide-react'
-import type { Task, TaskStatus, TaskType } from '@/types'
+import type { Task, TaskStatus, TaskType, Profile } from '@/types'
 import { STATUS_OPTIONS, TASK_TYPE_OPTIONS } from '@/types'
 import { PriorityIcon } from '@/components/ui/PriorityIcon'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -25,6 +25,7 @@ import { format } from 'date-fns'
 
 interface BoardViewProps {
   tasks: Task[]
+  profiles: Profile[]
   onUpdateTask: (id: string, updates: Partial<Task>) => Promise<{ error?: string }>
   onSelectTask: (task: Task) => void
   onNewTask: () => void
@@ -42,7 +43,7 @@ function TaskTypeTag({ type }: { type: TaskType }) {
   )
 }
 
-function TaskCard({ task, onSelect, projectPrefix }: { task: Task; onSelect: () => void; projectPrefix: string }) {
+function TaskCard({ task, onSelect, projectPrefix, profiles }: { task: Task; onSelect: () => void; projectPrefix: string; profiles: Profile[] }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: 'task', task },
@@ -96,11 +97,25 @@ function TaskCard({ task, onSelect, projectPrefix }: { task: Task; onSelect: () 
             </span>
           )}
         </div>
-        {task.due_date && (
-          <span className="text-[11px] text-gray-400 dark:text-gray-500">
-            {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {task.due_date && (
+            <span className="text-[11px] text-gray-400 dark:text-gray-500">
+              {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+          )}
+          {task.assignee_id && (() => {
+            const assignee = profiles.find((p) => p.id === task.assignee_id)
+            return assignee ? (
+              assignee.avatar_url ? (
+                <img src={assignee.avatar_url} alt={assignee.name} className="h-5 w-5 rounded-full" />
+              ) : (
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[8px] font-medium text-white" title={assignee.name}>
+                  {assignee.name?.charAt(0)?.toUpperCase()}
+                </div>
+              )
+            ) : null
+          })()}
+        </div>
       </div>
     </div>
   )
@@ -237,11 +252,13 @@ function KanbanColumn({
   tasks,
   onTaskSelect,
   projectPrefix,
+  profiles,
 }: {
   status: TaskStatus
   tasks: Task[]
   onTaskSelect: (task: Task) => void
   projectPrefix: string
+  profiles: Profile[]
 }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col">
@@ -260,7 +277,7 @@ function KanbanColumn({
   )
 }
 
-export function BoardView({ tasks, onUpdateTask, onSelectTask, searchQuery, projectPrefix }: BoardViewProps) {
+export function BoardView({ tasks, profiles, onUpdateTask, onSelectTask, searchQuery, projectPrefix }: BoardViewProps) {
   const [detailTask, setDetailTask] = useState<Task | null>(null)
 
   const filteredTasks = useMemo(() => {

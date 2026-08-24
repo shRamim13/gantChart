@@ -52,5 +52,38 @@ export function useAdminProfiles() {
     }
   }
 
-  return { profiles, loading, updateRole, refetch: fetchProfiles }
+  async function toggleActive(id: string, isActive: boolean) {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: isActive })
+        .eq('id', id)
+
+      if (error) {
+        console.error('Toggle active error:', error)
+        return { error: error.message }
+      }
+
+      setProfiles((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, is_active: isActive } : p))
+      )
+      return { error: undefined }
+    } catch (err) {
+      console.error('Toggle active exception:', err)
+      return { error: 'Failed to update user status' }
+    }
+  }
+
+  async function deleteUser(id: string) {
+    try {
+      const { error } = await supabase.from('profiles').delete().eq('id', id)
+      if (error) return { error: error.message }
+      setProfiles((prev) => prev.filter((p) => p.id !== id))
+      return { error: undefined }
+    } catch {
+      return { error: 'Failed to delete user' }
+    }
+  }
+
+  return { profiles, loading, updateRole, toggleActive, deleteUser, refetch: fetchProfiles }
 }

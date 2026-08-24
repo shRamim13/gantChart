@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import toast from 'react-hot-toast'
 import { Trash2, Edit, Calendar, Clock, MessageSquare, Plus } from 'lucide-react'
-import type { Task, Epic } from '@/types'
+import type { Task, Epic, Profile } from '@/types'
 import { STATUS_OPTIONS, TASK_TYPE_OPTIONS, getPermissions } from '@/types'
 import { PriorityIcon } from '@/components/ui/PriorityIcon'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -21,10 +21,11 @@ interface TaskDetailPanelProps {
   onAddSubtask: (parentId: string) => void
   projectPrefix: string
   epics?: Epic[]
+  profiles?: Profile[]
   allTasks?: Task[]
 }
 
-export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdit, onAddSubtask, projectPrefix, epics = [], allTasks = [] }: TaskDetailPanelProps) {
+export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdit, onAddSubtask, projectPrefix, epics = [], profiles = [], allTasks = [] }: TaskDetailPanelProps) {
   const { profile } = useAuth()
   const perms = profile ? getPermissions(profile.role) : getPermissions('viewer')
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -154,6 +155,25 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
             </label>
             <p className="text-sm text-gray-900 dark:text-white">{task.est_days ?? '—'}</p>
           </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Assignee</label>
+          {task.assignee_id ? (() => {
+            const assignee = profiles.find((p) => p.id === task.assignee_id)
+            return assignee ? (
+              <div className="flex items-center gap-2">
+                {assignee.avatar_url ? (
+                  <img src={assignee.avatar_url} alt="" className="h-6 w-6 rounded-full" />
+                ) : (
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-medium text-white">
+                    {assignee.name?.charAt(0)?.toUpperCase()}
+                  </div>
+                )}
+                <span className="text-sm text-gray-900 dark:text-white">{assignee.name}</span>
+              </div>
+            ) : <p className="text-sm text-gray-400">Unknown</p>
+          })() : <p className="text-sm text-gray-400">—</p>}
         </div>
 
         {/* Child Tasks / Subtasks */}

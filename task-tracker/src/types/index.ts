@@ -6,6 +6,7 @@ export interface Profile {
   email: string
   role: UserRole
   avatar_url: string | null
+  is_active: boolean
 }
 
 export interface Project {

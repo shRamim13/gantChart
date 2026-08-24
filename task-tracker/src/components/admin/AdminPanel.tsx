@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Shield, Users, Mail, UserMinus, Send, Copy } from 'lucide-react'
+import { Shield, Users, Mail, Send, Copy, Trash2 } from 'lucide-react'
 import { useAdminProfiles } from '@/hooks/useAdminProfiles'
 import { useInvitations } from '@/hooks/useInvitations'
 import { useAuth } from '@/components/auth/AuthProvider'
@@ -17,8 +17,8 @@ const ROLE_COLORS: Record<UserRole, string> = {
 }
 
 export function AdminPanel() {
-  const { profiles, loading: profilesLoading, updateRole } = useAdminProfiles()
-  const { invitations, loading: invitesLoading, inviteUser, revokeInvitation, deleteUser } = useInvitations()
+  const { profiles, loading: profilesLoading, updateRole, toggleActive, deleteUser } = useAdminProfiles()
+  const { invitations, loading: invitesLoading, inviteUser, revokeInvitation } = useInvitations()
   const { profile: currentUser } = useAuth()
   const [tab, setTab] = useState<'users' | 'invitations'>('users')
   const [inviteEmail, setInviteEmail] = useState('')
@@ -26,18 +26,40 @@ export function AdminPanel() {
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
   const [deleteUserName, setDeleteUserName] = useState('')
   const [revokeId, setRevokeId] = useState<string | null>(null)
+  const [toggleUserId, setToggleUserId] = useState<string | null>(null)
+  const [toggleUserName, setToggleUserName] = useState('')
 
-  const canDeleteUsers = currentUser?.role === 'super_admin'
   const loading = profilesLoading || invitesLoading
 
   async function handleRoleChange(userId: string, newRole: UserRole) {
-    if (userId === currentUser?.id) {
-      toast.error("You can't change your own role")
-      return
-    }
     const result = await updateRole(userId, newRole)
     if (!result.error) {
       toast.success('Role updated')
+    } else {
+      toast.error(result.error)
+    }
+  }
+
+  async function handleToggleActive() {
+    if (!toggleUserId) return
+    const user = profiles.find((p) => p.id === toggleUserId)
+    if (!user) return
+    const newActive = !user.is_active
+    const result = await toggleActive(toggleUserId, newActive)
+    if (!result.error) {
+      toast.success(newActive ? `${user.name} activated` : `${user.name} deactivated`)
+      setToggleUserId(null)
+    } else {
+      toast.error(result.error)
+    }
+  }
+
+  async function handleDeleteUser() {
+    if (!deleteUserId) return
+    const result = await deleteUser(deleteUserId)
+    if (!result.error) {
+      toast.success('User removed permanently')
+      setDeleteUserId(null)
     } else {
       toast.error(result.error)
     }
@@ -60,17 +82,6 @@ export function AdminPanel() {
       toast.success(`Invitation email sent to ${inviteEmail}`)
       setInviteEmail('')
       setInviteRole('user')
-    } else {
-      toast.error(result.error)
-    }
-  }
-
-  async function handleDeleteUser() {
-    if (!deleteUserId) return
-    const result = await deleteUser(deleteUserId)
-    if (!result.error) {
-      toast.success('User removed')
-      setDeleteUserId(null)
     } else {
       toast.error(result.error)
     }
@@ -120,7 +131,7 @@ export function AdminPanel() {
               tab === 'users' ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
             )}
           >
-            <Users size={16} /> Users ({profiles.length})
+            <Users size={16} /> Users ({profiles.length}{profiles.filter((p) => p.is_active === false).length > 0 ? `, ${profiles.filter((p) => p.is_active === false).length} pending` : ''})
           </button>
           <button
             onClick={() => setTab('invitations')}
@@ -146,8 +157,10 @@ export function AdminPanel() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {profiles.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                {profiles.map((user) => {
+                  const isInactive = user.is_active === false
+                  return (
+                  <tr key={user.id} className={cn('hover:bg-gray-50 dark:hover:bg-gray-800/50', isInactive && 'opacity-50')}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {user.avatar_url ? (
@@ -157,12 +170,19 @@ export function AdminPanel() {
                             {user.name?.charAt(0)?.toUpperCase() ?? 'U'}
                           </div>
                         )}
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          {user.name}
-                          {user.id === currentUser?.id && (
-                            <span className="ml-1.5 text-xs text-gray-400">(you)</span>
+                        <div>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            {user.name}
+                            {user.id === currentUser?.id && (
+                              <span className="ml-1.5 text-xs text-gray-400">(you)</span>
+                            )}
+                          </span>
+                          {isInactive && (
+                            <span className="ml-2 inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                              Pending Approval
+                            </span>
                           )}
-                        </span>
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
@@ -172,33 +192,40 @@ export function AdminPanel() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {user.id !== currentUser?.id ? (
-                          <select
-                            defaultValue={user.role}
-                            onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
-                            className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                          >
-                            {ROLE_OPTIONS.map((r) => (
-                              <option key={r.value} value={r.value}>{r.label}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span className="text-xs text-gray-400">—</span>
-                        )}
-                        {canDeleteUsers && user.id !== currentUser?.id && user.role !== 'super_admin' && (
-                          <button
-                            onClick={() => { setDeleteUserId(user.id); setDeleteUserName(user.name) }}
-                            className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                            title="Remove user"
-                          >
-                            <UserMinus size={14} />
-                          </button>
-                        )}
+                      <div className="flex items-center gap-1">
+                            <select
+                              defaultValue={user.role}
+                              onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
+                              className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                            >
+                              {ROLE_OPTIONS.map((r) => (
+                                <option key={r.value} value={r.value}>{r.label}</option>
+                              ))}
+                            </select>
+                            <button
+                              onClick={() => { setToggleUserId(user.id); setToggleUserName(user.name) }}
+                              className={cn(
+                                'rounded-lg px-2 py-1.5 text-xs font-medium',
+                                isInactive
+                                  ? 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20'
+                                  : 'text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20'
+                              )}
+                              title={isInactive ? 'Activate user' : 'Deactivate user'}
+                            >
+                              {isInactive ? 'Activate' : 'Deactivate'}
+                            </button>
+                            <button
+                              onClick={() => { setDeleteUserId(user.id); setDeleteUserName(user.name) }}
+                              className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                              title="Delete user permanently"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                       </div>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
                 {profiles.length === 0 && (
                   <tr>
                     <td colSpan={4} className="px-4 py-8 text-center">
@@ -348,6 +375,15 @@ export function AdminPanel() {
           confirmLabel="Revoke"
           onConfirm={handleRevoke}
           onCancel={() => setRevokeId(null)}
+        />
+
+        <ConfirmDialog
+          open={!!toggleUserId}
+          title={profiles.find((p) => p.id === toggleUserId)?.is_active === false ? `Activate ${toggleUserName}?` : `Deactivate ${toggleUserName}?`}
+          message={profiles.find((p) => p.id === toggleUserId)?.is_active === false ? 'User will be able to login again.' : 'User will be blocked from logging in. They can be reactivated later.'}
+          confirmLabel={profiles.find((p) => p.id === toggleUserId)?.is_active === false ? 'Activate' : 'Deactivate'}
+          onConfirm={handleToggleActive}
+          onCancel={() => { setToggleUserId(null); setToggleUserName('') }}
         />
       </div>
     </div>
