@@ -44,6 +44,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Watch for profile changes (deactivation by admin)
+  useEffect(() => {
+    if (!user) return
+
+    const channel = supabase
+      .channel('profile-changes-' + user.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .on('postgres_changes' as any, { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload: any) => {
+        const updated = payload.new as Profile
+        if (updated.is_active === false) {
+          supabase.auth.signOut()
+          setUser(null)
+          setProfile(null)
+        } else {
+          setProfile(updated)
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user])
+
   async function fetchProfile(userId: string) {
     try {
       const { data } = await supabase
