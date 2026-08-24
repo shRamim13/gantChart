@@ -29,14 +29,9 @@ export function AdminPanel() {
   const [toggleUserId, setToggleUserId] = useState<string | null>(null)
   const [toggleUserName, setToggleUserName] = useState('')
 
-  const canDeleteUsers = currentUser?.role === 'super_admin'
   const loading = profilesLoading || invitesLoading
 
   async function handleRoleChange(userId: string, newRole: UserRole) {
-    if (userId === currentUser?.id) {
-      toast.error("You can't change your own role")
-      return
-    }
     const result = await updateRole(userId, newRole)
     if (!result.error) {
       toast.success('Role updated')
@@ -198,8 +193,6 @@ export function AdminPanel() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        {user.id !== currentUser?.id && user.role !== 'super_admin' && (
-                          <>
                             <select
                               defaultValue={user.role}
                               onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
@@ -221,20 +214,13 @@ export function AdminPanel() {
                             >
                               {isInactive ? 'Activate' : 'Deactivate'}
                             </button>
-                            {canDeleteUsers && (
-                              <button
-                                onClick={() => { setDeleteUserId(user.id); setDeleteUserName(user.name) }}
-                                className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                                title="Delete user permanently"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            )}
-                          </>
-                        )}
-                        {user.id === currentUser?.id && (
-                          <span className="text-xs text-gray-400">—</span>
-                        )}
+                            <button
+                              onClick={() => { setDeleteUserId(user.id); setDeleteUserName(user.name) }}
+                              className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                              title="Delete user permanently"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                       </div>
                     </td>
                   </tr>

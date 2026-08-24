@@ -277,7 +277,7 @@ function KanbanColumn({
   )
 }
 
-export function BoardView({ tasks, onUpdateTask, onSelectTask, searchQuery, projectPrefix }: BoardViewProps) {
+export function BoardView({ tasks, profiles, onUpdateTask, onSelectTask, searchQuery, projectPrefix }: BoardViewProps) {
   const [detailTask, setDetailTask] = useState<Task | null>(null)
 
   const filteredTasks = useMemo(() => {

@@ -206,6 +206,7 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
           {activeView === 'board' && (
             <BoardView
               tasks={filteredTasks}
+              profiles={profiles}
               onUpdateTask={updateTask}
               onSelectTask={handleSelectTask}
               onNewTask={handleOpenNewTask}
@@ -267,6 +268,7 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
         }}
         projectPrefix={projectPrefix}
         epics={epics}
+        profiles={profiles}
         allTasks={filteredTasks}
       />
     </div>
