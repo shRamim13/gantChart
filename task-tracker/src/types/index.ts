@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'editor' | 'viewer'
+export type UserRole = 'super_admin' | 'admin' | 'user' | 'viewer'
 
 export interface Profile {
   id: string
@@ -137,7 +137,71 @@ export const TASK_TYPE_OPTIONS: { value: TaskType; label: string; color: string 
 ]
 
 export const ROLE_OPTIONS: { value: UserRole; label: string; description: string }[] = [
-  { value: 'admin', label: 'Admin', description: 'Full access. Can manage users, projects, and delete anything.' },
-  { value: 'editor', label: 'Editor', description: 'Can create and edit tasks, projects.' },
-  { value: 'viewer', label: 'Viewer', description: 'Read-only access. Cannot create or edit.' },
+  { value: 'super_admin', label: 'Super Admin', description: 'Full access. Can create/delete projects, epics, tasks, and manage users.' },
+  { value: 'admin', label: 'Admin', description: 'Can create projects/epics/tasks. Can edit and delete tasks. Cannot delete projects or epics.' },
+  { value: 'user', label: 'User', description: 'Can create tasks and subtasks. Can edit subtasks. Cannot delete anything.' },
+  { value: 'viewer', label: 'Viewer', description: 'Read-only access. Cannot create, edit, or delete anything.' },
 ]
+
+export const ROLE_PERMISSIONS = {
+  super_admin: {
+    canCreateProject: true,
+    canDeleteProject: true,
+    canCreateEpic: true,
+    canEditEpic: true,
+    canDeleteEpic: true,
+    canCreateTask: true,
+    canEditTask: true,
+    canDeleteTask: true,
+    canCreateSubtask: true,
+    canEditSubtask: true,
+    canDeleteSubtask: true,
+    canManageUsers: true,
+  },
+  admin: {
+    canCreateProject: true,
+    canDeleteProject: false,
+    canCreateEpic: true,
+    canEditEpic: true,
+    canDeleteEpic: false,
+    canCreateTask: true,
+    canEditTask: true,
+    canDeleteTask: true,
+    canCreateSubtask: true,
+    canEditSubtask: true,
+    canDeleteSubtask: true,
+    canManageUsers: true,
+  },
+  user: {
+    canCreateProject: false,
+    canDeleteProject: false,
+    canCreateEpic: false,
+    canEditEpic: false,
+    canDeleteEpic: false,
+    canCreateTask: true,
+    canEditTask: true,
+    canDeleteTask: false,
+    canCreateSubtask: true,
+    canEditSubtask: true,
+    canDeleteSubtask: false,
+    canManageUsers: false,
+  },
+  viewer: {
+    canCreateProject: false,
+    canDeleteProject: false,
+    canCreateEpic: false,
+    canEditEpic: false,
+    canDeleteEpic: false,
+    canCreateTask: false,
+    canEditTask: false,
+    canDeleteTask: false,
+    canCreateSubtask: false,
+    canEditSubtask: false,
+    canDeleteSubtask: false,
+    canManageUsers: false,
+  },
+} as const
+
+export function getPermissions(role: UserRole) {
+  return ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS.viewer
+}

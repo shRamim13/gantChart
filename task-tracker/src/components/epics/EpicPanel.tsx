@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { Plus, X, Trash2 } from 'lucide-react'
 import { useEpics } from '@/hooks/useEpics'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { EPIC_COLORS } from '@/types'
+import { EPIC_COLORS, getPermissions } from '@/types'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { cn } from '@/lib/utils'
 
@@ -15,13 +15,15 @@ interface EpicPanelProps {
 
 export function EpicPanel({ projectId, activeEpicId, onSelectEpic }: EpicPanelProps) {
   const { profile } = useAuth()
-  const { epics, createEpic, deleteEpic } = useEpics(projectId)
+  const perms = profile ? getPermissions(profile.role) : getPermissions('viewer')
+  const { epics, createEpic, deleteEpic } = useEpics(projectId, profile?.role)
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
   const [newColor, setNewColor] = useState(EPIC_COLORS[0])
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const canManage = profile?.role === 'admin' || profile?.role === 'editor'
+  const canManage = perms.canCreateEpic
+  const canDelete = perms.canDeleteEpic
 
   function handleCreate() {
     if (!newName.trim()) return
@@ -122,7 +124,7 @@ export function EpicPanel({ projectId, activeEpicId, onSelectEpic }: EpicPanelPr
                 <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: epic.color }} />
                 <span className="flex-1 text-left truncate">{epic.name}</span>
               </button>
-              {canManage && (
+              {canDelete && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setDeleteId(epic.id) }}
                   className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 dark:hover:bg-red-900/20"

@@ -1,9 +1,9 @@
 import { useState } from 'react'
+import { useAuth } from '@/components/auth/AuthProvider'
 import toast from 'react-hot-toast'
 import { Trash2, Edit, Calendar, Clock, MessageSquare, Plus } from 'lucide-react'
 import type { Task, Epic } from '@/types'
-import { STATUS_OPTIONS, TASK_TYPE_OPTIONS } from '@/types'
-import { useAuth } from '@/components/auth/AuthProvider'
+import { STATUS_OPTIONS, TASK_TYPE_OPTIONS, getPermissions } from '@/types'
 import { PriorityIcon } from '@/components/ui/PriorityIcon'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/Button'
@@ -26,10 +26,11 @@ interface TaskDetailPanelProps {
 
 export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdit, onAddSubtask, projectPrefix, epics = [], allTasks = [] }: TaskDetailPanelProps) {
   const { profile } = useAuth()
+  const perms = profile ? getPermissions(profile.role) : getPermissions('viewer')
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const canEdit = profile?.role === 'admin' || profile?.role === 'editor'
-  const canDelete = profile?.role === 'admin' || profile?.role === 'editor'
+  const canEdit = perms.canEditTask
+  const canDelete = perms.canDeleteTask
 
   if (!task) return null
 
@@ -213,7 +214,7 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
                   )}
                   <PriorityIcon priority={child.priority} />
                   <StatusBadge status={child.status} />
-                  {canDelete && (
+                  {perms.canDeleteSubtask && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation()

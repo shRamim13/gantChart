@@ -5,6 +5,7 @@ import { useProjects } from '@/hooks/useProjects'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { AdminPanel } from '@/components/admin/AdminPanel'
+import { getPermissions } from '@/types'
 import type { ViewType, SortField, SortDirection } from '@/types'
 
 interface AppLayoutProps {
@@ -22,7 +23,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { profile } = useAuth()
   const { projects, createProject, deleteProject } = useProjects(profile?.role)
-  const canCreateTask = profile?.role === 'admin' || profile?.role === 'editor'
+  const canCreateTask = profile ? getPermissions(profile.role).canCreateTask : false
   const [activeProjectId, setActiveProjectId] = useState<string | null>(projects[0]?.id ?? null)
   const [activeEpicId, setActiveEpicId] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<ViewType>('table')

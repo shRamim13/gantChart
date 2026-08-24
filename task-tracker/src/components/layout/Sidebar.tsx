@@ -4,6 +4,7 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { EpicPanel } from '@/components/epics/EpicPanel'
 import { cn } from '@/lib/utils'
+import { getPermissions } from '@/types'
 import type { Project } from '@/types'
 
 interface SidebarProps {
@@ -28,7 +29,9 @@ export function Sidebar({ projects, activeProjectId, activeEpicId, activeTab, on
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const canManageProjects = profile?.role === 'admin' || profile?.role === 'editor'
+  const perms = profile ? getPermissions(profile.role) : getPermissions('viewer')
+  const canManageProjects = perms.canCreateProject
+  const canManageUsers = perms.canManageUsers
 
   function handleCreate() {
     if (newName.trim() && newShortName.trim()) {
@@ -155,7 +158,7 @@ export function Sidebar({ projects, activeProjectId, activeEpicId, activeTab, on
           />
         )}
 
-        {canManageProjects && (
+        {canManageUsers && (
           <div className="px-2 py-2">
             <button
               onClick={() => onSelectTab(activeTab === 'admin' ? 'projects' : 'admin')}

@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: userId,
             name: user.data.user.user_metadata?.full_name || user.data.user.email?.split('@')[0] || 'User',
             email: user.data.user.email || '',
-            role: (isFirstUser ? 'admin' : 'editor') as 'admin' | 'editor',
+            role: (isFirstUser ? 'super_admin' : 'user') as 'super_admin' | 'user',
             avatar_url: user.data.user.user_metadata?.avatar_url || null,
           }
           await supabase.from('profiles').insert(newProfile)

@@ -6,8 +6,9 @@ import type { UserRole } from '@/types'
 import { ROLE_OPTIONS } from '@/types'
 
 const ROLE_COLORS: Record<UserRole, string> = {
+  super_admin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   admin: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  editor: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  user: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   viewer: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 }
 

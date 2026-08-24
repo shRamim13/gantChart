@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Epic } from '@/types'
 import type { UserRole } from '@/types'
+import { getPermissions } from '@/types'
 
 export function useEpics(projectId: string | null, userRole?: UserRole) {
+  const perms = userRole ? getPermissions(userRole) : getPermissions('viewer')
   const [epics, setEpics] = useState<Epic[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -37,7 +39,7 @@ export function useEpics(projectId: string | null, userRole?: UserRole) {
   }, [fetchEpics])
 
   async function createEpic(name: string, color: string) {
-    if (userRole === 'viewer') return { data: null, error: 'Viewers cannot create epics' }
+    if (!perms.canCreateEpic) return { data: null, error: 'You do not have permission to create epics' }
     try {
       const { data, error } = await supabase
         .from('epics')
@@ -58,6 +60,7 @@ export function useEpics(projectId: string | null, userRole?: UserRole) {
   }
 
   async function updateEpic(id: string, updates: Partial<Epic>) {
+    if (!perms.canEditEpic) return { data: null, error: 'You do not have permission to edit epics' }
     try {
       const { data, error } = await supabase
         .from('epics')
@@ -79,7 +82,7 @@ export function useEpics(projectId: string | null, userRole?: UserRole) {
   }
 
   async function deleteEpic(id: string) {
-    if (userRole !== 'admin') return { error: 'Only admins can delete epics' }
+    if (!perms.canDeleteEpic) return { error: 'You do not have permission to delete epics' }
     try {
       const { error } = await supabase.from('epics').delete().eq('id', id)
       if (error) {
