@@ -8,6 +8,7 @@ import { useTasks } from '@/hooks/useTasks'
 import { useProjects } from '@/hooks/useProjects'
 import { useEpics } from '@/hooks/useEpics'
 import { useSprints } from '@/hooks/useSprints'
+import { useProfiles } from '@/hooks/useProfiles'
 import { TableView } from '@/components/views/TableView'
 import { BoardView } from '@/components/views/BoardView'
 import { TimelineView } from '@/components/views/TimelineView'
@@ -95,6 +96,7 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
   const { projects } = useProjects(profile?.role)
   const { epics } = useEpics(projectId, profile?.role)
   const { sprints } = useSprints(projectId)
+  const { profiles } = useProfiles()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -187,6 +189,7 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
               projectPrefix={projectPrefix}
               epics={epics}
               sprints={sprints}
+              profiles={profiles}
               onEditTask={handleEditTask}
               onDeleteTask={async (id) => {
                 const result = await deleteTask(id)
@@ -244,6 +247,7 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
         nextTicketNumber={nextTicketNumber}
         projectPrefix={projectPrefix}
         epics={epics}
+        profiles={profiles}
         defaultEpicId={epicId}
         parentTaskId={newSubtaskParentId}
       />

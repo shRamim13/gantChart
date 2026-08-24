@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
-import type { Task, TaskStatus, TaskType, SortField, SortDirection, Epic, Sprint } from '@/types'
+import type { Task, TaskStatus, TaskType, SortField, SortDirection, Epic, Sprint, Profile } from '@/types'
 import { TASK_TYPE_OPTIONS, STATUS_OPTIONS } from '@/types'
 import { PriorityIcon } from '@/components/ui/PriorityIcon'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -15,6 +15,7 @@ interface TableViewProps {
   projectPrefix: string
   epics: Epic[]
   sprints: Sprint[]
+  profiles: Profile[]
   allTasks: Task[]
   onEditTask: (task: Task) => void
   onDeleteTask: (taskId: string) => void
@@ -37,7 +38,7 @@ function SubtaskProgress({ childTasks }: { childTasks: Task[] }) {
   )
 }
 
-export function TableView({ tasks, sortField, sortDirection, projectPrefix, epics, sprints, onEditTask, onDeleteTask, onStatusChange, onSelectTask }: TableViewProps) {
+export function TableView({ tasks, sortField, sortDirection, projectPrefix, epics, sprints, profiles, onEditTask, onDeleteTask, onStatusChange, onSelectTask }: TableViewProps) {
   const [editingCell, setEditingCell] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [page, setPage] = useState(0)
@@ -100,6 +101,7 @@ export function TableView({ tasks, sortField, sortDirection, projectPrefix, epic
               </th>
               <th className="px-3 py-3 font-medium text-gray-500 dark:text-gray-400">Epic</th>
               <th className="px-3 py-3 font-medium text-gray-500 dark:text-gray-400">Sprint</th>
+              <th className="px-3 py-3 font-medium text-gray-500 dark:text-gray-400">Assignee</th>
               <th className="px-3 py-3 font-medium text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-1">Status <SortIndicator field="status" /></div>
               </th>
@@ -119,7 +121,7 @@ export function TableView({ tasks, sortField, sortDirection, projectPrefix, epic
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-3 py-12 text-center text-gray-400 dark:text-gray-500">
+                <td colSpan={12} className="px-3 py-12 text-center text-gray-400 dark:text-gray-500">
                   No tasks yet. Create your first task!
                 </td>
               </tr>
@@ -161,6 +163,24 @@ export function TableView({ tasks, sortField, sortDirection, projectPrefix, epic
                         <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400">
                           {sprints.find((s) => s.id === task.sprint_id)?.name || 'Sprint'}
                         </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {task.assignee_id ? (
+                        <div className="flex items-center gap-1.5">
+                          {profiles.find((p) => p.id === task.assignee_id)?.avatar_url ? (
+                            <img src={profiles.find((p) => p.id === task.assignee_id)!.avatar_url!} alt="" className="h-5 w-5 rounded-full" />
+                          ) : (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[8px] font-medium text-white">
+                              {profiles.find((p) => p.id === task.assignee_id)?.name?.charAt(0)?.toUpperCase() ?? '?'}
+                            </div>
+                          )}
+                          <span className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[80px]">
+                            {profiles.find((p) => p.id === task.assignee_id)?.name || 'Unknown'}
+                          </span>
+                        </div>
                       ) : (
                         <span className="text-xs text-gray-400">—</span>
                       )}

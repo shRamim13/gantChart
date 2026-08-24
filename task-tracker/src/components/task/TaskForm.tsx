@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { Task, TaskStatus, TaskPriority, TaskType, Epic } from '@/types'
+import type { Task, TaskStatus, TaskPriority, TaskType, Epic, Profile } from '@/types'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS, TASK_TYPE_OPTIONS } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { SlideOver } from '@/components/ui/SlideOver'
@@ -13,17 +13,19 @@ interface TaskFormProps {
   nextTicketNumber?: number
   projectPrefix?: string
   epics?: Epic[]
+  profiles?: Profile[]
   defaultEpicId?: string | null
   parentTaskId?: string | null
 }
 
-export function TaskForm({ open, onClose, onSave, project_id, initialData, nextTicketNumber = 1, projectPrefix = 'TASK', epics = [], defaultEpicId = null, parentTaskId = null }: TaskFormProps) {
+export function TaskForm({ open, onClose, onSave, project_id, initialData, nextTicketNumber = 1, projectPrefix = 'TASK', epics = [], profiles = [], defaultEpicId = null, parentTaskId = null }: TaskFormProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<TaskStatus>('todo')
   const [priority, setPriority] = useState<TaskPriority>('medium')
   const [taskType, setTaskType] = useState<TaskType>('feature')
   const [epicId, setEpicId] = useState<string | null>(null)
+  const [assigneeId, setAssigneeId] = useState<string | null>(null)
   const [estHours, setEstHours] = useState('')
   const [estDays, setEstDays] = useState('')
   const [startDate, setStartDate] = useState('')
@@ -39,6 +41,7 @@ export function TaskForm({ open, onClose, onSave, project_id, initialData, nextT
       setPriority(initialData.priority)
       setTaskType(initialData.task_type ?? 'feature')
       setEpicId(initialData.epic_id ?? null)
+      setAssigneeId(initialData.assignee_id ?? null)
       setEstHours(initialData.est_hours?.toString() ?? '')
       setEstDays(initialData.est_days?.toString() ?? '')
       setStartDate(initialData.start_date ?? '')
@@ -50,6 +53,7 @@ export function TaskForm({ open, onClose, onSave, project_id, initialData, nextT
       setPriority('medium')
       setTaskType('feature')
       setEpicId(defaultEpicId)
+      setAssigneeId(null)
       setEstHours('')
       setEstDays('')
       setStartDate('')
@@ -76,7 +80,7 @@ export function TaskForm({ open, onClose, onSave, project_id, initialData, nextT
         due_date: dueDate || null,
         epic_id: epicId,
         module_id: initialData?.module_id ?? null,
-        assignee_id: initialData?.assignee_id ?? null,
+        assignee_id: assigneeId,
         parent_task_id: initialData?.parent_task_id ?? parentTaskId,
         sprint_id: initialData?.sprint_id ?? null,
       })
@@ -133,6 +137,20 @@ export function TaskForm({ open, onClose, onSave, project_id, initialData, nextT
             <option value="">No Epic</option>
             {epics.map((epic) => (
               <option key={epic.id} value={epic.id}>{epic.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Assignee</label>
+          <select
+            value={assigneeId ?? ''}
+            onChange={(e) => setAssigneeId(e.target.value || null)}
+            className="mt-1.5 block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+          >
+            <option value="">Unassigned</option>
+            {profiles.filter((p) => p.is_active !== false).map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
         </div>
