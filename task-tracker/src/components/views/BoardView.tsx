@@ -2,12 +2,13 @@ import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
   DndContext,
-  closestCorners,
   PointerSensor,
   useSensor,
   useSensors,
   useDroppable,
+  rectIntersection,
   type DragEndEvent,
+  type CollisionDetection,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -59,10 +60,12 @@ function TaskCard({ task, onSelect, projectPrefix, profiles }: { task: Task; onS
     <div
       ref={setNodeRef}
       style={style}
+      {...attributes}
+      {...listeners}
       onClick={onSelect}
       className={cn(
-        'group cursor-pointer rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm transition-all hover:shadow-md dark:border-gray-700 dark:bg-gray-800',
-        isDragging && 'opacity-50 shadow-lg ring-2 ring-indigo-500'
+        'group cursor-grab rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm transition-all hover:shadow-md dark:border-gray-700 dark:bg-gray-800 active:cursor-grabbing',
+        isDragging && 'opacity-50 shadow-lg ring-2 ring-indigo-500 z-50'
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -75,14 +78,7 @@ function TaskCard({ task, onSelect, projectPrefix, profiles }: { task: Task; onS
           </div>
           <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">{task.title}</p>
         </div>
-        <button
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
-          className="mt-0.5 cursor-grab text-gray-300 opacity-0 transition-opacity hover:text-gray-500 group-hover:opacity-100"
-        >
-          <GripVertical size={14} />
-        </button>
+        <GripVertical size={14} className="mt-0.5 shrink-0 text-gray-300 group-hover:text-gray-500" />
       </div>
 
       {task.description && (
@@ -305,7 +301,7 @@ export function BoardView({ tasks, profiles, onUpdateTask, onSelectTask, searchQ
   }, [tasks, searchQuery, projectPrefix])
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   )
 
   const tasksByStatus = useMemo(() => {
@@ -322,6 +318,15 @@ export function BoardView({ tasks, profiles, onUpdateTask, onSelectTask, searchQ
     return grouped
   }, [filteredTasks])
 
+  const customCollisionDetection: CollisionDetection = (args) => {
+    const intersections = rectIntersection(args)
+    const droppableCollision = intersections.find((c) =>
+      STATUS_OPTIONS.some((s) => s.value === c.id)
+    )
+    if (droppableCollision) return [droppableCollision]
+    return intersections
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over) return
@@ -335,8 +340,13 @@ export function BoardView({ tasks, profiles, onUpdateTask, onSelectTask, searchQ
       newStatus = over.id as TaskStatus
     } else {
       const overTask = filteredTasks.find((t) => t.id === over.id)
-      if (overTask && overTask.status !== activeTask.status) {
-        newStatus = overTask.status
+      if (overTask) {
+        if (overTask.status !== activeTask.status) {
+          newStatus = overTask.status
+        }
+        if (overTask.parent_task_id !== activeTask.parent_task_id) {
+          return
+        }
       }
     }
 
@@ -353,7 +363,7 @@ export function BoardView({ tasks, profiles, onUpdateTask, onSelectTask, searchQ
 
   return (
     <>
-      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={customCollisionDetection} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 p-6">
           {STATUS_OPTIONS.map((option) => (
             <KanbanColumn
