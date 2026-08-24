@@ -95,8 +95,11 @@ export interface Comment {
 export interface Attachment {
   id: string
   task_id: string
-  file_url: string
-  file_name: string | null
+  file_name: string
+  file_size: number
+  file_type: string
+  storage_path: string
+  uploaded_by: string
   created_at: string
 }
 

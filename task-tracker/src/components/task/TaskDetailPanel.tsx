@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import toast from 'react-hot-toast'
-import { Trash2, Edit, Calendar, Clock, MessageSquare, Plus } from 'lucide-react'
+import { Trash2, Edit, Calendar, Clock, MessageSquare, Plus, Paperclip, Download } from 'lucide-react'
 import type { Task, Epic, Profile } from '@/types'
 import { STATUS_OPTIONS, TASK_TYPE_OPTIONS, getPermissions } from '@/types'
 import { PriorityIcon } from '@/components/ui/PriorityIcon'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/Button'
 import { SlideOver } from '@/components/ui/SlideOver'
+import { useAttachments } from '@/hooks/useAttachments'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 
@@ -29,9 +30,52 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
   const { profile } = useAuth()
   const perms = profile ? getPermissions(profile.role) : getPermissions('viewer')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { attachments, loading: attachmentsLoading, uploadAttachment, deleteAttachment, getSignedUrl } = useAttachments(task?.id ?? null)
 
   const canEdit = perms.canEditTask
   const canDelete = perms.canDeleteTask
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !profile) return
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('File too large (max 50MB)')
+      return
+    }
+    toast.loading('Uploading...', { id: 'upload' })
+    const result = await uploadAttachment(file, profile.id)
+    toast.dismiss('upload')
+    if (result.error) {
+      toast.error(result.error)
+    } else {
+      toast.success('File uploaded')
+    }
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  async function handleDownload(attachment: { file_name: string; storage_path: string; id: string }) {
+    const url = await getSignedUrl(attachment as never)
+    if (url) window.open(url, '_blank')
+    else toast.error('Failed to get download link')
+  }
+
+  function formatFileSize(bytes: number) {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / 1048576).toFixed(1) + ' MB'
+  }
+
+  function getFileIcon(type: string) {
+    if (type.startsWith('image/')) return '🖼️'
+    if (type.includes('pdf')) return '📄'
+    if (type.includes('word') || type.includes('document')) return '📝'
+    if (type.includes('sheet') || type.includes('excel')) return '📊'
+    if (type.includes('zip') || type.includes('rar')) return '📦'
+    if (type.startsWith('video/')) return '🎬'
+    if (type.startsWith('audio/')) return '🎵'
+    return '📎'
+  }
 
   if (!task) return null
 
@@ -277,6 +321,69 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
             </div>
           </div>
         )}
+
+        {/* Attachments */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+              <Paperclip size={12} /> Attachments {attachments.length > 0 && <span className="text-gray-400">({attachments.length})</span>}
+            </label>
+            {canEdit && (
+              <>
+                <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                >
+                  <Plus size={12} /> Upload
+                </button>
+              </>
+            )}
+          </div>
+
+          {attachmentsLoading ? (
+            <p className="text-xs text-gray-400 italic py-2">Loading...</p>
+          ) : attachments.length > 0 ? (
+            <div className="space-y-1.5">
+              {attachments.map((att) => (
+                <div
+                  key={att.id}
+                  className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-800/50"
+                >
+                  <span className="text-base">{getFileIcon(att.file_type)}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-gray-700 dark:text-gray-300">{att.file_name}</p>
+                    <p className="text-[10px] text-gray-400">{formatFileSize(att.file_size)}</p>
+                  </div>
+                  <button
+                    onClick={() => handleDownload(att)}
+                    className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-indigo-600 dark:hover:bg-gray-700"
+                    title="Download"
+                  >
+                    <Download size={12} />
+                  </button>
+                  {canEdit && (
+                    <button
+                      onClick={async () => {
+                        if (window.confirm(`Delete "${att.file_name}"?`)) {
+                          const result = await deleteAttachment(att)
+                          if (result.error) toast.error(result.error)
+                          else toast.success('Deleted')
+                        }
+                      }}
+                      className="rounded p-1 text-gray-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 dark:hover:bg-red-900/20"
+                      title="Delete"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 dark:text-gray-500 italic py-2">No attachments</p>
+          )}
+        </div>
 
         <div>
           <label className="flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
