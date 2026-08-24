@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { Paperclip, Trash2 } from 'lucide-react'
 import type { Task, TaskStatus, TaskPriority, TaskType, Epic, Profile } from '@/types'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS, TASK_TYPE_OPTIONS } from '@/types'
 import { Button } from '@/components/ui/Button'
@@ -7,7 +8,7 @@ import { SlideOver } from '@/components/ui/SlideOver'
 interface TaskFormProps {
   open: boolean
   onClose: () => void
-  onSave: (data: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'is_deleted' | 'ticket_number'>) => Promise<{ error?: string }>
+  onSave: (data: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'is_deleted' | 'ticket_number'>) => Promise<{ data?: { id: string }; error?: string }>
   project_id: string
   initialData?: Task | null
   nextTicketNumber?: number
@@ -16,9 +17,10 @@ interface TaskFormProps {
   profiles?: Profile[]
   defaultEpicId?: string | null
   parentTaskId?: string | null
+  onUploadAttachment?: (taskId: string, file: File) => Promise<{ error?: string }>
 }
 
-export function TaskForm({ open, onClose, onSave, project_id, initialData, nextTicketNumber = 1, projectPrefix = 'TASK', epics = [], profiles = [], defaultEpicId = null, parentTaskId = null }: TaskFormProps) {
+export function TaskForm({ open, onClose, onSave, project_id, initialData, nextTicketNumber = 1, projectPrefix = 'TASK', epics = [], profiles = [], defaultEpicId = null, parentTaskId = null, onUploadAttachment }: TaskFormProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<TaskStatus>('todo')
@@ -32,6 +34,8 @@ export function TaskForm({ open, onClose, onSave, project_id, initialData, nextT
   const [dueDate, setDueDate] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (initialData) {
@@ -58,6 +62,7 @@ export function TaskForm({ open, onClose, onSave, project_id, initialData, nextT
       setEstDays('')
       setStartDate('')
       setDueDate('')
+      setPendingFiles([])
     }
   }, [initialData, open, defaultEpicId])
 
@@ -88,6 +93,12 @@ export function TaskForm({ open, onClose, onSave, project_id, initialData, nextT
       if (result?.error) {
         setError(result.error)
       } else {
+        if (result?.data?.id && pendingFiles.length > 0 && onUploadAttachment) {
+          for (const file of pendingFiles) {
+            await onUploadAttachment(result.data.id, file)
+          }
+        }
+        setPendingFiles([])
         onClose()
         return
       }
@@ -247,6 +258,33 @@ export function TaskForm({ open, onClose, onSave, project_id, initialData, nextT
             />
           </div>
         </div>
+
+        {onUploadAttachment && (
+          <div>
+            <label className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <Paperclip size={14} /> Attachments
+            </label>
+            <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => {
+              const files = Array.from(e.target.files || [])
+              setPendingFiles((prev) => [...prev, ...files])
+              if (fileInputRef.current) fileInputRef.current.value = ''
+            }} />
+            <div className="mt-1.5 space-y-1.5">
+              {pendingFiles.map((file, idx) => (
+                <div key={idx} className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-800/50">
+                  <span className="text-sm">📎</span>
+                  <span className="flex-1 truncate text-xs text-gray-700 dark:text-gray-300">{file.name}</span>
+                  <button type="button" onClick={() => setPendingFiles((prev) => prev.filter((_, i) => i !== idx))} className="rounded p-0.5 text-gray-400 hover:text-red-500">
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+              <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
+                <Paperclip size={12} /> Add file
+              </button>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">

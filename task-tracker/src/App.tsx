@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Toaster } from 'react-hot-toast'
 import toast from 'react-hot-toast'
 import { AuthProvider, useAuth } from '@/components/auth/AuthProvider'
@@ -9,6 +9,7 @@ import { useProjects } from '@/hooks/useProjects'
 import { useEpics } from '@/hooks/useEpics'
 import { useSprints } from '@/hooks/useSprints'
 import { useProfiles } from '@/hooks/useProfiles'
+import { supabase } from '@/lib/supabase'
 import { TableView } from '@/components/views/TableView'
 import { BoardView } from '@/components/views/BoardView'
 import { TimelineView } from '@/components/views/TimelineView'
@@ -97,6 +98,22 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
   const { epics } = useEpics(projectId, profile?.role)
   const { sprints } = useSprints(projectId)
   const { profiles } = useProfiles()
+
+  const handleUploadAttachment = useCallback(async (taskId: string, file: File): Promise<{ error?: string }> => {
+    const filePath = `${taskId}/${Date.now()}_${file.name}`
+    const { error: uploadError } = await supabase.storage.from('task-attachments').upload(filePath, file)
+    if (uploadError) return { error: uploadError.message }
+    const { error: dbError } = await supabase.from('task_attachments').insert({
+      task_id: taskId,
+      file_name: file.name,
+      file_size: file.size,
+      file_type: file.type,
+      storage_path: filePath,
+      uploaded_by: profile?.id,
+    })
+    if (dbError) return { error: dbError.message }
+    return {}
+  }, [profile?.id])
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -239,9 +256,11 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
         onClose={handleCloseForm}
         onSave={async (data) => {
           if (editingTask) {
-            return updateTask(editingTask.id, data)
+            const result = await updateTask(editingTask.id, data)
+            return { data: result.data ? { id: result.data.id } : undefined, error: result.error }
           }
-          return createTask(data)
+          const result = await createTask(data)
+          return { data: result.data ? { id: result.data.id } : undefined, error: result.error }
         }}
         project_id={projectId}
         initialData={editingTask}
@@ -251,6 +270,7 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
         profiles={profiles}
         defaultEpicId={epicId}
         parentTaskId={newSubtaskParentId}
+        onUploadAttachment={handleUploadAttachment}
       />
 
       <TaskDetailPanel
