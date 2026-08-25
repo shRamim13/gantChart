@@ -73,7 +73,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Task Tracker <noreply@yourdomain.com>",
+        from: "Task Tracker <onboarding@resend.dev>",
         to: [assignee.email],
         subject: `You've been assigned ${prefix}-${task?.ticket_number || "???"}`,
         html: `
