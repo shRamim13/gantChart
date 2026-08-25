@@ -284,6 +284,9 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
             return { data: result.data ? { id: result.data.id } : undefined, error: result.error }
           }
           const result = await createTask(data)
+          if (!result.error && result.data?.id && data.assignee_id) {
+            notifyTaskAssigned(result.data.id, data.assignee_id, profile?.name)
+          }
           return { data: result.data ? { id: result.data.id } : undefined, error: result.error }
         }}
         project_id={projectId}
