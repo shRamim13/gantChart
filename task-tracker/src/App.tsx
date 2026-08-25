@@ -285,6 +285,7 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
         defaultEpicId={epicId}
         parentTaskId={newSubtaskParentId}
         onUploadAttachment={handleUploadAttachment}
+        profile={profile}
       />
 
       <TaskDetailPanel

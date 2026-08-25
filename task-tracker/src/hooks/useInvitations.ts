@@ -35,6 +35,30 @@ export function useInvitations() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return { error: 'Not authenticated' }
 
+      // Check if user already has a profile
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single()
+
+      if (existingProfile) {
+        return { error: 'User already has an account' }
+      }
+
+      // Check if already invited
+      const { data: existingInvite } = await supabase
+        .from('invitations')
+        .select('id, status')
+        .eq('email', email)
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString())
+        .single()
+
+      if (existingInvite) {
+        return { error: 'User already has a pending invitation' }
+      }
+
       // Store invitation in DB
       const { data, error } = await supabase
         .from('invitations')
@@ -57,6 +81,8 @@ export function useInvitations() {
 
       if (emailError) {
         console.warn('Email send failed (invitation still saved):', emailError.message)
+        // Still return success — invitation is saved, admin can share link manually
+        return { data: data as Invitation | null, error: undefined, emailFailed: true }
       }
 
       if (data) setInvitations((prev) => [data as Invitation, ...prev])
