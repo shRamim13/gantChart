@@ -4,7 +4,6 @@ import type { Task, TaskStatus, TaskPriority, TaskType, Epic, Profile } from '@/
 import { STATUS_OPTIONS, PRIORITY_OPTIONS, TASK_TYPE_OPTIONS } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { SlideOver } from '@/components/ui/SlideOver'
-import { notifyTaskAssigned } from '@/lib/notify'
 
 interface TaskFormProps {
   open: boolean
@@ -19,10 +18,9 @@ interface TaskFormProps {
   defaultEpicId?: string | null
   parentTaskId?: string | null
   onUploadAttachment?: (taskId: string, file: File) => Promise<{ error?: string }>
-  profile?: { name: string } | null
 }
 
-export function TaskForm({ open, onClose, onSave, project_id, initialData, nextTicketNumber = 1, projectPrefix = 'TASK', epics = [], profiles = [], defaultEpicId = null, parentTaskId = null, onUploadAttachment, profile }: TaskFormProps) {
+export function TaskForm({ open, onClose, onSave, project_id, initialData, nextTicketNumber = 1, projectPrefix = 'TASK', epics = [], profiles = [], defaultEpicId = null, parentTaskId = null, onUploadAttachment }: TaskFormProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<TaskStatus>('todo')
@@ -95,14 +93,9 @@ export function TaskForm({ open, onClose, onSave, project_id, initialData, nextT
       if (result?.error) {
         setError(result.error)
       } else {
-        if (result?.data?.id) {
-          if (assigneeId && assigneeId !== initialData?.assignee_id) {
-            notifyTaskAssigned(result.data.id, assigneeId, profile?.name)
-          }
-          if (pendingFiles.length > 0 && onUploadAttachment) {
-            for (const file of pendingFiles) {
-              await onUploadAttachment(result.data.id, file)
-            }
+        if (result?.data?.id && pendingFiles.length > 0 && onUploadAttachment) {
+          for (const file of pendingFiles) {
+            await onUploadAttachment(result.data.id, file)
           }
         }
         setPendingFiles([])

@@ -10,6 +10,7 @@ import { useEpics } from '@/hooks/useEpics'
 import { useSprints } from '@/hooks/useSprints'
 import { useProfiles } from '@/hooks/useProfiles'
 import { supabase } from '@/lib/supabase'
+import { notifyTaskAssigned } from '@/lib/notify'
 import { TableView } from '@/components/views/TableView'
 import { BoardView } from '@/components/views/BoardView'
 import { TimelineView } from '@/components/views/TimelineView'
@@ -94,12 +95,21 @@ interface ProjectContentViewProps {
 
 function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortField, sortDirection }: ProjectContentViewProps) {
   const { profile } = useAuth()
-  const { tasks, loading, createTask, updateTask, deleteTask, nextTicketNumber } = useTasks(projectId, profile?.role)
+  const { tasks, loading, createTask, updateTask: rawUpdateTask, deleteTask, nextTicketNumber } = useTasks(projectId, profile?.role)
   const { projects } = useProjects(profile?.role)
   const { epics } = useEpics(projectId, profile?.role)
   const { sprints } = useSprints(projectId)
   const { profiles } = useProfiles()
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+
+  const updateTask = useCallback(async (id: string, updates: Partial<Task>) => {
+    const task = tasks.find((t) => t.id === id)
+    const result = await rawUpdateTask(id, updates)
+    if (!result.error && updates.assignee_id !== undefined && task && updates.assignee_id !== task.assignee_id && updates.assignee_id) {
+      notifyTaskAssigned(id, updates.assignee_id, profile?.name)
+    }
+    return result
+  }, [rawUpdateTask, tasks, profile?.name])
 
   const handleUploadAttachment = useCallback(async (taskId: string, file: File): Promise<{ error?: string }> => {
     const filePath = `${taskId}/${Date.now()}_${file.name}`
@@ -285,7 +295,6 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
         defaultEpicId={epicId}
         parentTaskId={newSubtaskParentId}
         onUploadAttachment={handleUploadAttachment}
-        profile={profile}
       />
 
       <TaskDetailPanel
