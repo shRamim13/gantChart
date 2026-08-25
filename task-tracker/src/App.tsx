@@ -14,6 +14,7 @@ import { TableView } from '@/components/views/TableView'
 import { BoardView } from '@/components/views/BoardView'
 import { TimelineView } from '@/components/views/TimelineView'
 import { SprintBoard } from '@/components/sprints/SprintBoard'
+import { UserFilter } from '@/components/ui/UserFilter'
 import { TaskForm } from '@/components/task/TaskForm'
 import { TaskDetailPanel } from '@/components/task/TaskDetailPanel'
 import type { Task, ViewType, SortField, SortDirection } from '@/types'
@@ -98,6 +99,7 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
   const { epics } = useEpics(projectId, profile?.role)
   const { sprints } = useSprints(projectId)
   const { profiles } = useProfiles()
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
 
   const handleUploadAttachment = useCallback(async (taskId: string, file: File): Promise<{ error?: string }> => {
     const filePath = `${taskId}/${Date.now()}_${file.name}`
@@ -125,9 +127,11 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
 
   // Filter tasks by epic if one is selected
   const filteredTasks = useMemo(() => {
-    if (!epicId) return tasks
-    return tasks.filter((t) => t.epic_id === epicId)
-  }, [tasks, epicId])
+    let result = tasks
+    if (epicId) result = result.filter((t) => t.epic_id === epicId)
+    if (selectedUserIds.length > 0) result = result.filter((t) => selectedUserIds.includes(t.assignee_id ?? ''))
+    return result
+  }, [tasks, epicId, selectedUserIds])
 
   // Listen for new task event from topbar
   useEffect(() => {
@@ -197,6 +201,16 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
         </div>
       ) : (
         <>
+          {/* User Filter Bar */}
+          <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900/50">
+            <UserFilter profiles={profiles} selectedUserIds={selectedUserIds} onChange={setSelectedUserIds} />
+            {selectedUserIds.length > 0 && (
+              <span className="text-xs text-gray-400">
+                {filteredTasks.length} of {tasks.length} tasks
+              </span>
+            )}
+          </div>
+
           {activeView === 'table' && (
             <TableView
               tasks={filteredTasks}
@@ -243,7 +257,7 @@ function ProjectContentView({ projectId, epicId, searchQuery, activeView, sortFi
           {activeView === 'sprints' && (
             <SprintBoard
               projectId={projectId}
-              tasks={tasks}
+              tasks={filteredTasks}
               onEditTask={handleEditTask}
             />
           )}
