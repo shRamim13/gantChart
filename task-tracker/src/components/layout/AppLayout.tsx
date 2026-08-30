@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
-import { LayoutGrid } from 'lucide-react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useProjects } from '@/hooks/useProjects'
+import { supabase } from '@/lib/supabase'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
+import { Dashboard } from './Dashboard'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { getPermissions } from '@/types'
-import type { ViewType, SortField, SortDirection } from '@/types'
+import type { Task, ViewType, SortField, SortDirection } from '@/types'
 
 interface AppLayoutProps {
   children: (props: {
@@ -31,7 +32,13 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortField, setSortField] = useState<SortField>(() => (localStorage.getItem('sortField') as SortField) || 'created_at')
   const [sortDirection, setSortDirection] = useState<SortDirection>(() => (localStorage.getItem('sortDirection') as SortDirection) || 'desc')
-  const [activeTab, setActiveTab] = useState<'projects' | 'admin'>(() => (localStorage.getItem('activeTab') as 'projects' | 'admin') || 'projects')
+  const [activeTab, setActiveTab] = useState<'projects' | 'admin'>(() => {
+    const saved = localStorage.getItem('activeTab')
+    if (saved === 'admin') {
+      localStorage.setItem('activeTab', 'projects')
+    }
+    return 'projects'
+  })
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('darkMode') === 'true' ||
@@ -39,6 +46,17 @@ export function AppLayout({ children }: AppLayoutProps) {
     }
     return false
   })
+  const [allTasks, setAllTasks] = useState<Task[]>([])
+
+  // Fetch all tasks for dashboard
+  useEffect(() => {
+    if (activeTab === 'admin') return
+    async function fetchAllTasks() {
+      const { data } = await supabase.from('tasks').select('*').eq('is_deleted', false)
+      if (data) setAllTasks(data as Task[])
+    }
+    fetchAllTasks()
+  }, [activeTab])
 
   const toggleDark = () => {
     setDarkMode((prev) => {
@@ -143,25 +161,19 @@ export function AppLayout({ children }: AppLayoutProps) {
               {activeProjectId ? (
                 children({ projectId: activeProjectId, epicId: activeEpicId, searchQuery, activeView, sortField, sortDirection, onNewTask: handleNewTask })
               ) : (
-                <div className="flex h-full items-center justify-center bg-gray-50 dark:bg-gray-950">
-                  <div className="text-center px-8">
-                    <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20">
-                      <LayoutGrid className="h-10 w-10 text-indigo-500" />
-                    </div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Welcome to Gantt Chart</h2>
-                    <p className="mt-2 max-w-sm text-sm text-gray-500 dark:text-gray-400">
-                      Create your first project to start tracking tasks, managing sprints, and collaborating with your team.
-                    </p>
-                    <button
-                      onClick={() => {}}
-                      className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:bg-indigo-700 hover:shadow-xl active:scale-[0.98]"
-                    >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                      Create Project
-                    </button>
-                    <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">Click + next to Projects in the sidebar</p>
-                  </div>
-                </div>
+                <Dashboard
+                  allTasks={allTasks}
+                  onSelectProject={handleSelectProject}
+                  onCreateProject={() => {
+                    const name = prompt('Project name:')
+                    if (name?.trim()) {
+                      const shortName = prompt('Short name (e.g. GANT):')
+                      if (shortName?.trim()) {
+                        handleCreateProject(name.trim(), shortName.trim().toUpperCase())
+                      }
+                    }
+                  }}
+                />
               )}
             </main>
           </>
