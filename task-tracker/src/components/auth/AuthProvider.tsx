@@ -120,6 +120,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } else {
         const profile = data as Profile
+
+        // Check for pending invitation — update role if user was invited
+        const user = await supabase.auth.getUser()
+        if (user.data.user) {
+          const email = user.data.user.email || ''
+          const { data: invitation } = await supabase
+            .from('invitations')
+            .select('role')
+            .eq('email', email)
+            .eq('status', 'pending')
+            .gt('expires_at', new Date().toISOString())
+            .single()
+
+          if (invitation) {
+            // Update role to invited role and activate
+            await supabase.from('invitations').update({ status: 'accepted' }).eq('email', email)
+            await supabase.from('profiles').update({ role: invitation.role, is_active: true }).eq('id', profile.id)
+            setProfile({ ...profile, role: invitation.role, is_active: true })
+            setLoading(false)
+            return
+          }
+        }
+
         // Block inactive users (not approved by admin yet)
         if (profile.is_active === false) {
           setProfile(profile)
