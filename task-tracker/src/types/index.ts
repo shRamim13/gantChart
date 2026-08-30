@@ -89,6 +89,7 @@ export interface Comment {
   task_id: string
   user_id: string
   body: string
+  parent_comment_id: string | null
   created_at: string
 }
 

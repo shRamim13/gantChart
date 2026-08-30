@@ -22,22 +22,59 @@ export function useComments(taskId: string | null) {
     fetchComments()
   }, [fetchComments])
 
-  async function addComment(body: string, userId: string): Promise<{ error?: string }> {
+  // Realtime subscription
+  useEffect(() => {
+    if (!taskId) return
+
+    const channel = supabase
+      .channel(`comments:${taskId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'comments',
+        filter: `task_id=eq.${taskId}`
+      }, (payload) => {
+        setComments((prev) => {
+          if (prev.some((c) => c.id === (payload.new as Comment).id)) return prev
+          return [...prev, payload.new as Comment]
+        })
+      })
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'comments',
+        filter: `task_id=eq.${taskId}`
+      }, (payload) => {
+        setComments((prev) => prev.filter((c) => c.id !== (payload.old as Comment).id))
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [taskId])
+
+  async function addComment(body: string, userId: string, parentCommentId?: string | null): Promise<{ error?: string }> {
     if (!taskId || !body.trim()) return { error: 'Missing data' }
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('comments')
-      .insert({ task_id: taskId, user_id: userId, body: body.trim() })
+      .insert({
+        task_id: taskId,
+        user_id: userId,
+        body: body.trim(),
+        parent_comment_id: parentCommentId ?? null
+      })
       .select()
       .single()
     if (error) return { error: error.message }
-    if (data) setComments((prev) => [...prev, data as Comment])
+    // Realtime will handle adding to state; avoid duplicate
     return {}
   }
 
   async function deleteComment(id: string): Promise<{ error?: string }> {
     const { error } = await supabase.from('comments').delete().eq('id', id)
     if (error) return { error: error.message }
-    setComments((prev) => prev.filter((c) => c.id !== id))
+    // Realtime will handle removal from state
     return {}
   }
 

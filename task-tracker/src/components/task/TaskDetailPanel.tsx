@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import toast from 'react-hot-toast'
-import { Trash2, Edit, Calendar, Clock, MessageSquare, Plus, Paperclip, Download, Send } from 'lucide-react'
-import type { Task, Epic, Profile } from '@/types'
+import { Trash2, Edit, Calendar, Clock, MessageSquare, Plus, Paperclip, Download, Send, Reply, X } from 'lucide-react'
+import type { Task, Epic, Profile, Comment } from '@/types'
 import { STATUS_OPTIONS, TASK_TYPE_OPTIONS, getPermissions } from '@/types'
 import { PriorityIcon } from '@/components/ui/PriorityIcon'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -35,6 +35,8 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
   const { attachments, loading: attachmentsLoading, uploadAttachment, deleteAttachment, getSignedUrl } = useAttachments(task?.id ?? null)
   const { comments, loading: commentsLoading, addComment, deleteComment } = useComments(task?.id ?? null)
   const [newComment, setNewComment] = useState('')
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState('')
 
   const canEdit = perms.canEditTask
   const canDelete = perms.canDeleteTask
@@ -80,13 +82,19 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
     return '📎'
   }
 
-  async function handleAddComment() {
-    if (!newComment.trim() || !profile) return
-    const result = await addComment(newComment, profile.id)
+  async function handleAddComment(parentId?: string | null) {
+    const text = parentId ? replyText : newComment
+    if (!text.trim() || !profile) return
+    const result = await addComment(text, profile.id, parentId)
     if (result.error) {
       toast.error(result.error)
     } else {
-      setNewComment('')
+      if (parentId) {
+        setReplyText('')
+        setReplyingTo(null)
+      } else {
+        setNewComment('')
+      }
     }
   }
 
@@ -408,41 +416,108 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
             <p className="text-xs text-gray-400 italic py-2">Loading...</p>
           ) : comments.length > 0 ? (
             <div className="space-y-3 mb-3">
-              {comments.map((comment) => {
-                const commenter = profiles.find((p) => p.id === comment.user_id)
-                const isOwn = comment.user_id === profile?.id
-                return (
-                  <div key={comment.id} className="group">
-                    <div className="flex items-start gap-2">
-                      {commenter?.avatar_url ? (
-                        <img src={commenter.avatar_url} alt="" className="h-6 w-6 rounded-full mt-0.5" />
-                      ) : (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[8px] font-medium text-white mt-0.5">
-                          {commenter?.name?.charAt(0)?.toUpperCase() ?? '?'}
+              {(() => {
+                const topLevel = comments.filter((c) => !c.parent_comment_id)
+                const repliesMap = new Map<string, Comment[]>()
+                comments.forEach((c) => {
+                  if (c.parent_comment_id) {
+                    const existing = repliesMap.get(c.parent_comment_id) || []
+                    existing.push(c)
+                    repliesMap.set(c.parent_comment_id, existing)
+                  }
+                })
+
+                function renderComment(comment: Comment, isReply = false) {
+                  const commenter = profiles.find((p) => p.id === comment.user_id)
+                  const isOwn = comment.user_id === profile?.id
+                  const replies = repliesMap.get(comment.id) || []
+                  return (
+                    <div key={comment.id} className={cn('group', isReply && 'ml-8 mt-2')}>
+                      <div className="flex items-start gap-2">
+                        {commenter?.avatar_url ? (
+                          <img src={commenter.avatar_url} alt="" className="h-6 w-6 rounded-full mt-0.5" />
+                        ) : (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[8px] font-medium text-white mt-0.5">
+                            {commenter?.name?.charAt(0)?.toUpperCase() ?? '?'}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{commenter?.name || 'Unknown'}</span>
+                            <span className="text-[10px] text-gray-400">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
+                            {canEdit && !isReply && (
+                              <button
+                                onClick={() => { setReplyingTo(replyingTo === comment.id ? null : comment.id); setReplyText('') }}
+                                className="rounded p-0.5 text-gray-400 opacity-0 transition-opacity hover:text-indigo-500 group-hover:opacity-100"
+                                title="Reply"
+                              >
+                                <Reply size={10} />
+                              </button>
+                            )}
+                            {isOwn && (
+                              <button
+                                onClick={async () => {
+                                  const result = await deleteComment(comment.id)
+                                  if (result.error) toast.error(result.error)
+                                }}
+                                className="rounded p-0.5 text-gray-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
+                              >
+                                <Trash2 size={10} />
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{comment.body}</p>
+                        </div>
+                      </div>
+
+                      {/* Reply input for this comment */}
+                      {replyingTo === comment.id && (
+                        <div className="ml-8 mt-2 flex items-start gap-2">
+                          <textarea
+                            autoFocus
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && replyText.trim()) {
+                                e.preventDefault()
+                                handleAddComment(comment.id)
+                              }
+                              if (e.key === 'Escape') { setReplyingTo(null); setReplyText('') }
+                            }}
+                            rows={2}
+                            className="flex-1 rounded-lg border border-indigo-200 bg-indigo-50/50 px-3 py-2 text-xs text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:border-indigo-800 dark:bg-indigo-900/10 dark:text-white resize-none"
+                            placeholder={`Reply to ${commenter?.name || 'Unknown'}... (Ctrl+Enter to send)`}
+                          />
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => handleAddComment(comment.id)}
+                              disabled={!replyText.trim()}
+                              className="rounded-lg bg-indigo-600 p-1.5 text-white transition-all hover:bg-indigo-700 disabled:opacity-30"
+                            >
+                              <Send size={10} />
+                            </button>
+                            <button
+                              onClick={() => { setReplyingTo(null); setReplyText('') }}
+                              className="rounded-lg bg-gray-200 p-1.5 text-gray-500 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+                            >
+                              <X size={10} />
+                            </button>
+                          </div>
                         </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{commenter?.name || 'Unknown'}</span>
-                          <span className="text-[10px] text-gray-400">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
-                          {isOwn && (
-                            <button
-                              onClick={async () => {
-                                const result = await deleteComment(comment.id)
-                                if (result.error) toast.error(result.error)
-                              }}
-                              className="rounded p-0.5 text-gray-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
-                            >
-                              <Trash2 size={10} />
-                            </button>
-                          )}
+
+                      {/* Nested replies */}
+                      {replies.length > 0 && (
+                        <div className="mt-2 border-l-2 border-indigo-100 dark:border-indigo-900/30">
+                          {replies.map((reply) => renderComment(reply, true))}
                         </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{comment.body}</p>
-                      </div>
+                      )}
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                }
+
+                return topLevel.map((comment) => renderComment(comment))
+              })()}
             </div>
           ) : (
             <p className="text-xs text-gray-400 dark:text-gray-500 italic py-2 mb-3">No comments yet</p>
@@ -465,7 +540,7 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
                 placeholder="Add a comment... (Ctrl+Enter to send)"
               />
               <button
-                onClick={handleAddComment}
+                onClick={() => handleAddComment()}
                 disabled={!newComment.trim()}
                 className="rounded-lg bg-indigo-600 p-2 text-white transition-all hover:bg-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed"
               >
