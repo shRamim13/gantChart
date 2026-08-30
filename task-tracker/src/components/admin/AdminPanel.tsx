@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Shield, Users, Mail, Send, Copy } from 'lucide-react'
+import { Shield, Users, Mail, Send, Copy, Trash2 } from 'lucide-react'
 import { useAdminProfiles } from '@/hooks/useAdminProfiles'
 import { useInvitations } from '@/hooks/useInvitations'
 import { useAuth } from '@/components/auth/AuthProvider'
@@ -18,7 +18,7 @@ const ROLE_COLORS: Record<UserRole, string> = {
 
 export function AdminPanel() {
   const { profiles, loading: profilesLoading, updateRole, toggleActive } = useAdminProfiles()
-  const { invitations, loading: invitesLoading, inviteUser, revokeInvitation } = useInvitations()
+  const { invitations, loading: invitesLoading, inviteUser, revokeInvitation, deleteUser } = useInvitations()
   const { profile: currentUser } = useAuth()
   const [tab, setTab] = useState<'users' | 'invitations'>('users')
   const [inviteEmail, setInviteEmail] = useState('')
@@ -26,6 +26,8 @@ export function AdminPanel() {
   const [revokeId, setRevokeId] = useState<string | null>(null)
   const [toggleUserId, setToggleUserId] = useState<string | null>(null)
   const [toggleUserName, setToggleUserName] = useState('')
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
+  const [deleteUserName, setDeleteUserName] = useState('')
 
   const loading = profilesLoading || invitesLoading
 
@@ -84,6 +86,22 @@ export function AdminPanel() {
     if (!result.error) {
       toast.success('Invitation revoked')
       setRevokeId(null)
+    } else {
+      toast.error(result.error)
+    }
+  }
+
+  async function handleDeleteUser() {
+    if (!deleteUserId) return
+    if (deleteUserId === currentUser?.id) {
+      toast.error("You can't delete yourself")
+      return
+    }
+    const result = await deleteUser(deleteUserId)
+    if (!result.error) {
+      toast.success(`${deleteUserName} deleted`)
+      setDeleteUserId(null)
+      setDeleteUserName('')
     } else {
       toast.error(result.error)
     }
@@ -205,6 +223,15 @@ export function AdminPanel() {
                             >
                               {isInactive ? 'Activate' : 'Deactivate'}
                             </button>
+                            {user.id !== currentUser?.id && (
+                              <button
+                                onClick={() => { setDeleteUserId(user.id); setDeleteUserName(user.name) }}
+                                className="rounded-lg px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                                title="Delete user"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
                       </div>
                     </td>
                   </tr>
@@ -359,6 +386,15 @@ export function AdminPanel() {
           confirmLabel={profiles.find((p) => p.id === toggleUserId)?.is_active === false ? 'Activate' : 'Deactivate'}
           onConfirm={handleToggleActive}
           onCancel={() => { setToggleUserId(null); setToggleUserName('') }}
+        />
+
+        <ConfirmDialog
+          open={!!deleteUserId}
+          title={`Delete ${deleteUserName}?`}
+          message="This will permanently delete this user and all their data. This action cannot be undone."
+          confirmLabel="Delete User"
+          onConfirm={handleDeleteUser}
+          onCancel={() => { setDeleteUserId(null); setDeleteUserName('') }}
         />
       </div>
     </div>
