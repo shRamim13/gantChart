@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 
-const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY")
-const SENDGRID_SENDER_EMAIL = Deno.env.get("SENDGRID_SENDER_EMAIL") || "noreply@gantchart.app"
-const SENDGRID_SENDER_NAME = Deno.env.get("SENDGRID_SENDER_NAME") || "Gantt Chart"
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY")
+const BREVO_SENDER_EMAIL = Deno.env.get("BREVO_SENDER_EMAIL") || "noreply@gantchart.app"
+const BREVO_SENDER_NAME = Deno.env.get("BREVO_SENDER_NAME") || "Gantt Chart"
 const SITE_URL = Deno.env.get("SITE_URL") || "https://gant-chart-pi.vercel.app/"
 
 const corsHeaders = {
@@ -130,26 +130,25 @@ function buildMentionHtml(toName: string, commenterName: string, commentBody: st
 </html>`
 }
 
-async function sendSendGridEmail(to: string, toName: string, subject: string, htmlContent: string) {
-  const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+async function sendBrevoEmail(to: string, toName: string, subject: string, htmlContent: string) {
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${SENDGRID_API_KEY}`,
-      "Content-Type": "application/json",
+      "accept": "application/json",
+      "content-type": "application/json",
+      "api-key": BREVO_API_KEY!,
     },
     body: JSON.stringify({
-      personalizations: [{
-        to: [{ email: to, name: toName }],
-      }],
-      from: { email: SENDGRID_SENDER_EMAIL, name: SENDGRID_SENDER_NAME },
+      sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL },
+      to: [{ email: to, name: toName }],
       subject,
-      content: [{ type: "text/html", value: htmlContent }],
+      htmlContent,
     }),
   })
 
-  if (!res.ok && res.status !== 202) {
+  if (!res.ok) {
     const err = await res.text()
-    throw new Error(`SendGrid API error ${res.status}: ${err}`)
+    throw new Error(`Brevo API error ${res.status}: ${err}`)
   }
 }
 
@@ -159,8 +158,8 @@ serve(async (req) => {
   }
 
   try {
-    if (!SENDGRID_API_KEY) {
-      return new Response(JSON.stringify({ error: "SENDGRID_API_KEY not set" }), {
+    if (!BREVO_API_KEY) {
+      return new Response(JSON.stringify({ error: "BREVO_API_KEY not set" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
     }
@@ -194,7 +193,7 @@ serve(async (req) => {
       htmlContent = buildMentionHtml(to_name || "", payload.commenter_name || "Someone", payload.comment_body || "", payload.task_context || "a task", taskLink)
     }
 
-    await sendSendGridEmail(to_email, to_name || "", subject, htmlContent)
+    await sendBrevoEmail(to_email, to_name || "", subject, htmlContent)
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
