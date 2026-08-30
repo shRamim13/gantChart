@@ -36,7 +36,7 @@ export function useInvitations() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return { error: 'Not authenticated' }
 
-      // Check if user already has a profile
+      // Check if user already has a profile — if so, just update their role
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id')
@@ -44,10 +44,25 @@ export function useInvitations() {
         .single()
 
       if (existingProfile) {
-        return { error: 'User already has an account' }
+        // User exists — update their role directly
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ role, is_active: true })
+          .eq('id', existingProfile.id)
+
+        if (updateError) return { error: updateError.message }
+
+        // Mark any old invitations as accepted
+        await supabase
+          .from('invitations')
+          .update({ status: 'accepted' })
+          .eq('email', email)
+          .eq('status', 'pending')
+
+        return { data: null, error: undefined }
       }
 
-      // Check if already invited
+      // Check if already invited (pending and not expired)
       const { data: existingInvite } = await supabase
         .from('invitations')
         .select('id, status')

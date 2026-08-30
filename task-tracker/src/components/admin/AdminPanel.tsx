@@ -60,18 +60,17 @@ export function AdminPanel() {
       return
     }
 
-    const existing = profiles.find((p) => p.email === inviteEmail.trim())
-    if (existing) {
-      toast.error('User already exists')
-      return
-    }
-
     const result = await inviteUser(inviteEmail.trim(), inviteRole)
     if (!result.error) {
-      if ('emailFailed' in result && result.emailFailed) {
-        toast.success(`Invitation saved. Email could not be sent — user can sign up with Google or contact admin.`)
+      const existingProfile = profiles.find((p) => p.email === inviteEmail.trim())
+      if (existingProfile) {
+        toast.success(`Updated ${inviteEmail} role to ${inviteRole}`)
       } else {
-        toast.success(`Invitation email sent to ${inviteEmail}`)
+        if ('emailFailed' in result && result.emailFailed) {
+          toast.success(`Invitation saved. Email could not be sent — user can sign up with Google or contact admin.`)
+        } else {
+          toast.success(`Invitation email sent to ${inviteEmail}`)
+        }
       }
       setInviteEmail('')
       setInviteRole('user')
