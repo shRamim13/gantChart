@@ -140,7 +140,7 @@ async function sendBrevoEmail(to: string, toName: string, subject: string, htmlC
     },
     body: JSON.stringify({
       sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL },
-      to: [{ email: to, name: toName }],
+      to: [{ email: to, name: toName || to.split("@")[0] }],
       subject,
       htmlContent,
     }),
@@ -193,7 +193,7 @@ serve(async (req) => {
       htmlContent = buildMentionHtml(to_name || "", payload.commenter_name || "Someone", payload.comment_body || "", payload.task_context || "a task", taskLink)
     }
 
-    await sendBrevoEmail(to_email, to_name || "", subject, htmlContent)
+    await sendBrevoEmail(to_email, to_name || to_email.split("@")[0], subject, htmlContent)
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
