@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import toast from 'react-hot-toast'
-import { Trash2, Edit, Calendar, Clock, MessageSquare, Plus, Paperclip, Download } from 'lucide-react'
+import { Trash2, Edit, Calendar, Clock, MessageSquare, Plus, Paperclip, Download, Send } from 'lucide-react'
 import type { Task, Epic, Profile } from '@/types'
 import { STATUS_OPTIONS, TASK_TYPE_OPTIONS, getPermissions } from '@/types'
 import { PriorityIcon } from '@/components/ui/PriorityIcon'
@@ -9,8 +9,9 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/Button'
 import { SlideOver } from '@/components/ui/SlideOver'
 import { useAttachments } from '@/hooks/useAttachments'
+import { useComments } from '@/hooks/useComments'
 import { cn } from '@/lib/utils'
-import { format } from 'date-fns'
+import { format, formatDistanceToNow } from 'date-fns'
 
 interface TaskDetailPanelProps {
   task: Task | null
@@ -32,6 +33,8 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
   const [confirmDelete, setConfirmDelete] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { attachments, loading: attachmentsLoading, uploadAttachment, deleteAttachment, getSignedUrl } = useAttachments(task?.id ?? null)
+  const { comments, loading: commentsLoading, addComment, deleteComment } = useComments(task?.id ?? null)
+  const [newComment, setNewComment] = useState('')
 
   const canEdit = perms.canEditTask
   const canDelete = perms.canDeleteTask
@@ -75,6 +78,16 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
     if (type.startsWith('video/')) return '🎬'
     if (type.startsWith('audio/')) return '🎵'
     return '📎'
+  }
+
+  async function handleAddComment() {
+    if (!newComment.trim() || !profile) return
+    const result = await addComment(newComment, profile.id)
+    if (result.error) {
+      toast.error(result.error)
+    } else {
+      setNewComment('')
+    }
   }
 
   if (!task) return null
@@ -385,11 +398,81 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
           )}
         </div>
 
+        {/* Comments */}
         <div>
           <label className="flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-            <MessageSquare size={12} /> Activity
+            <MessageSquare size={12} /> Comments {comments.length > 0 && <span className="text-gray-400">({comments.length})</span>}
           </label>
-          <p className="text-sm text-gray-400 dark:text-gray-500 italic">Activity log coming soon</p>
+
+          {commentsLoading ? (
+            <p className="text-xs text-gray-400 italic py-2">Loading...</p>
+          ) : comments.length > 0 ? (
+            <div className="space-y-3 mb-3">
+              {comments.map((comment) => {
+                const commenter = profiles.find((p) => p.id === comment.user_id)
+                const isOwn = comment.user_id === profile?.id
+                return (
+                  <div key={comment.id} className="group">
+                    <div className="flex items-start gap-2">
+                      {commenter?.avatar_url ? (
+                        <img src={commenter.avatar_url} alt="" className="h-6 w-6 rounded-full mt-0.5" />
+                      ) : (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[8px] font-medium text-white mt-0.5">
+                          {commenter?.name?.charAt(0)?.toUpperCase() ?? '?'}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{commenter?.name || 'Unknown'}</span>
+                          <span className="text-[10px] text-gray-400">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
+                          {isOwn && (
+                            <button
+                              onClick={async () => {
+                                const result = await deleteComment(comment.id)
+                                if (result.error) toast.error(result.error)
+                              }}
+                              className="rounded p-0.5 text-gray-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
+                            >
+                              <Trash2 size={10} />
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{comment.body}</p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 dark:text-gray-500 italic py-2 mb-3">No comments yet</p>
+          )}
+
+          {/* Comment input */}
+          {canEdit && (
+            <div className="flex items-start gap-2">
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && newComment.trim()) {
+                    e.preventDefault()
+                    handleAddComment()
+                  }
+                }}
+                rows={2}
+                className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white resize-none"
+                placeholder="Add a comment... (Ctrl+Enter to send)"
+              />
+              <button
+                onClick={handleAddComment}
+                disabled={!newComment.trim()}
+                className="rounded-lg bg-indigo-600 p-2 text-white transition-all hover:bg-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Send size={12} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </SlideOver>
