@@ -22,6 +22,41 @@ import type { Task, ViewType, SortField, SortDirection } from '@/types'
 
 function MainContent() {
   const { user, profile, loading, signOut } = useAuth()
+  const [inviteProcessed, setInviteProcessed] = useState(false)
+
+  // Handle invite token when user is already logged in
+  useEffect(() => {
+    if (!user || !profile || inviteProcessed) return
+
+    const params = new URLSearchParams(window.location.search)
+    const inviteEmail = params.get('invite')
+    if (!inviteEmail) return
+
+    // User is logged in and email matches — accept invitation
+    if (profile.email === inviteEmail) {
+      supabase
+        .from('invitations')
+        .select('role')
+        .eq('email', inviteEmail)
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString())
+        .single()
+        .then(({ data: invitation }) => {
+          if (invitation) {
+            supabase.from('invitations').update({ status: 'accepted' }).eq('email', inviteEmail)
+            supabase.from('profiles').update({ role: invitation.role, is_active: true }).eq('id', profile.id)
+            toast.success(`Welcome! You've been set as ${invitation.role}.`)
+          }
+          window.history.replaceState({}, '', window.location.pathname)
+          setInviteProcessed(true)
+        })
+    } else {
+      // Logged in with wrong email — show message and clean URL
+      toast.error(`This invitation is for ${inviteEmail}, but you're logged in as ${profile.email}`)
+      window.history.replaceState({}, '', window.location.pathname)
+      setInviteProcessed(true)
+    }
+  }, [user, profile, inviteProcessed])
 
   if (loading) {
     return (

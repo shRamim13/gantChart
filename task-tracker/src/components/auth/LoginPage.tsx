@@ -123,7 +123,7 @@ export function LoginPage() {
 
           {invitedEmail && (
             <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-700 dark:border-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400">
-              You've been invited to join the team. Sign in or create an account with <strong>{invitedEmail}</strong>.
+              <strong>You've been invited!</strong> Click "Sign in with Google" below to join the team with <strong>{invitedEmail}</strong>.
             </div>
           )}
 
