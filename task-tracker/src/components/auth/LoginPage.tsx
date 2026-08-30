@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './AuthProvider'
-import { LogIn, Mail, Lock, LayoutGrid, ArrowLeft, BarChart3, CheckCircle, Users } from 'lucide-react'
+import { LogIn, Mail, Lock, LayoutGrid, ArrowLeft, BarChart3, CheckCircle, Users, Eye, EyeOff, Zap } from 'lucide-react'
 
 type Mode = 'login' | 'signup' | 'reset' | 'invite'
 
@@ -14,8 +14,11 @@ export function LoginPage() {
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const [invitedEmail, setInvitedEmail] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const params = new URLSearchParams(window.location.search)
     const inviteEmail = params.get('invite')
     if (inviteEmail) {
@@ -40,7 +43,6 @@ export function LoginPage() {
       }
       const result = await signUp(email, password)
       if (result.error) {
-        // If email already exists, try signing in instead
         if (result.error.includes('already') || result.error.includes('registered') || result.error.includes('exists')) {
           const signInResult = await signIn(email, password)
           if (signInResult.error) {
@@ -51,7 +53,6 @@ export function LoginPage() {
         }
       } else {
         setSuccess('Account created! Signing you in...')
-        // Auto sign-in after signup
         await signIn(email, password)
       }
     } else if (mode === 'login') {
@@ -82,71 +83,131 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left side — Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyem0wLTR2Mkg4VjI4aDI4em0wLTR2Mkg0VjI0aDMyem0wLTR2Mkg4VjIwaDI4em0wLTR2Mkg0VjE2aDMyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
-        <div className="relative z-10 flex flex-col justify-center px-16 text-white">
-          <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
-            <LayoutGrid className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold leading-tight">Gantt Chart<br />Task Tracker</h1>
-          <p className="mt-4 text-lg text-indigo-100">Plan, track, and deliver projects with your team.</p>
+    <div className="relative flex min-h-screen overflow-hidden bg-[#0a0a1a]">
+      {/* Animated background */}
+      <div className="absolute inset-0">
+        {/* Gradient orbs */}
+        <div className="absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-purple-600/20 blur-[120px] animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute -right-32 top-1/3 h-[400px] w-[400px] rounded-full bg-indigo-600/20 blur-[120px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }} />
+        <div className="absolute -bottom-32 left-1/3 h-[350px] w-[350px] rounded-full bg-violet-600/15 blur-[120px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '2s' }} />
 
+        {/* Grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: '60px 60px',
+          }}
+        />
+
+        {/* Floating particles */}
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full bg-purple-400/20 animate-pulse"
+            style={{
+              width: `${Math.random() * 4 + 1}px`,
+              height: `${Math.random() * 4 + 1}px`,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDuration: `${Math.random() * 3 + 2}s`,
+              animationDelay: `${Math.random() * 2}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Left panel — Branding (desktop) */}
+      <div className="hidden relative z-10 lg:flex lg:w-[45%] flex-col justify-center px-16">
+        <div className={`transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          {/* Logo */}
+          <div className="mb-10 flex items-center gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg shadow-purple-500/30">
+              <LayoutGrid className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">TaskFlow</h2>
+              <p className="text-xs text-purple-300/60">Project Management</p>
+            </div>
+          </div>
+
+          {/* Heading */}
+          <h1 className="text-5xl font-bold leading-tight text-white">
+            <span className="bg-gradient-to-r from-purple-400 via-indigo-400 to-violet-400 bg-clip-text text-transparent">
+              Manage projects
+            </span>
+            <br />
+            <span className="text-white/90">like never before</span>
+          </h1>
+          <p className="mt-5 max-w-md text-base text-gray-400 leading-relaxed">
+            Plan sprints, track progress, and deliver with your team — all in one beautiful workspace.
+          </p>
+
+          {/* Feature pills */}
           <div className="mt-12 space-y-4">
             {[
-              { icon: BarChart3, text: 'Gantt timeline & sprint boards' },
-              { icon: Users, text: 'Team collaboration & assignments' },
-              { icon: CheckCircle, text: 'Real-time progress tracking' },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15">
-                  <Icon size={16} className="text-white" />
+              { icon: BarChart3, text: 'Gantt timelines & sprint boards', color: 'from-purple-500 to-purple-600' },
+              { icon: Users, text: 'Real-time team collaboration', color: 'from-indigo-500 to-indigo-600' },
+              { icon: CheckCircle, text: 'Track every task to completion', color: 'from-violet-500 to-violet-600' },
+              { icon: Zap, text: 'Lightning fast performance', color: 'from-fuchsia-500 to-fuchsia-600' },
+            ].map(({ icon: Icon, text, color }, idx) => (
+              <div
+                key={text}
+                className={`flex items-center gap-4 transition-all duration-700 ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}
+                style={{ transitionDelay: `${400 + idx * 100}ms` }}
+              >
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${color} shadow-lg`}>
+                  <Icon size={18} className="text-white" />
                 </div>
-                <span className="text-sm text-indigo-100">{text}</span>
+                <span className="text-sm text-gray-300">{text}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Right side — Form */}
-      <div className="flex w-full items-center justify-center bg-gray-50 px-4 dark:bg-gray-950 lg:w-1/2">
-        <div className="w-full max-w-sm">
+      {/* Right panel — Form */}
+      <div className="relative z-10 flex w-full items-center justify-center px-4 lg:w-[55%]">
+        <div className={`w-full max-w-md transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '200ms' }}>
           {/* Mobile logo */}
           <div className="mb-8 text-center lg:hidden">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-500/25">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg shadow-purple-500/30">
               <LayoutGrid className="h-7 w-7 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Task Tracker</h1>
+            <h1 className="text-2xl font-bold text-white">TaskFlow</h1>
+            <p className="text-xs text-purple-300/60">Project Management</p>
           </div>
 
-          <div className="mb-8 hidden lg:block">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {mode === 'invite' && 'You\'re invited!'}
+          {/* Title */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white">
+              {mode === 'invite' && "You're invited!"}
               {mode === 'login' && 'Welcome back'}
-              {mode === 'signup' && 'Create account'}
+              {mode === 'signup' && 'Create your account'}
               {mode === 'reset' && 'Reset password'}
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-2 text-sm text-gray-400">
               {mode === 'invite' && 'Create your account to join the team'}
               {mode === 'login' && 'Sign in to continue to your workspace'}
-              {mode === 'signup' && 'Join your team on Task Tracker'}
+              {mode === 'signup' && 'Join your team on TaskFlow'}
               {mode === 'reset' && "We'll send you a reset link"}
             </p>
           </div>
 
+          {/* Invite banner */}
           {invitedEmail && (
-            <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-700 dark:border-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400">
-              <strong>You've been invited!</strong> Create your account with <strong>{invitedEmail}</strong> to join the team.
+            <div className="mb-5 rounded-2xl border border-purple-500/20 bg-purple-500/10 p-4 text-sm text-purple-300 backdrop-blur-sm">
+              <strong className="text-purple-200">You've been invited!</strong> Create your account with <strong className="text-purple-200">{invitedEmail}</strong>
             </div>
           )}
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-gray-200/50 dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
+          {/* Glass card */}
+          <div className="rounded-3xl border border-white/[0.06] bg-white/[0.03] p-8 shadow-2xl shadow-black/20 backdrop-blur-xl">
+            {/* Back button */}
             {(mode === 'reset' || mode === 'invite') && (
               <button
                 onClick={() => switchMode('login')}
-                className="mb-4 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                className="mb-5 flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-purple-400"
               >
                 <ArrowLeft size={14} />
                 {mode === 'invite' ? 'Already have an account? Sign in' : 'Back to login'}
@@ -159,7 +220,7 @@ export function LoginPage() {
                 <button
                   type="button"
                   onClick={handleGoogleSignIn}
-                  className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3.5 text-sm font-medium text-white transition-all hover:bg-white/[0.08] hover:border-white/[0.12] active:scale-[0.98]"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -170,95 +231,111 @@ export function LoginPage() {
                   Sign in with Google
                 </button>
 
-                <div className="relative my-5">
+                <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+                    <div className="w-full border-t border-white/[0.06]" />
                   </div>
                   <div className="relative flex justify-center text-xs">
-                    <span className="bg-white px-3 text-gray-400 dark:bg-gray-900 dark:text-gray-500">or set a password</span>
+                    <span className="bg-[#0a0a1a] px-4 text-gray-500">or set a password</span>
                   </div>
                 </div>
               </>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                <div className="relative mt-1.5">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <label className="mb-1.5 block text-xs font-medium text-gray-400 uppercase tracking-wider">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     readOnly={!!invitedEmail && mode === 'invite'}
-                    className="block w-full rounded-xl border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-700"
+                    className="block w-full rounded-xl border border-white/[0.06] bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-white placeholder-gray-500 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder="you@company.com"
                   />
                 </div>
               </div>
 
+              {/* Password */}
               {mode !== 'reset' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                  <div className="relative mt-1.5">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <label className="mb-1.5 block text-xs font-medium text-gray-400 uppercase tracking-wider">Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       required
                       minLength={6}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full rounded-xl border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="block w-full rounded-xl border border-white/[0.06] bg-white/[0.04] py-3 pl-11 pr-11 text-sm text-white placeholder-gray-500 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:bg-white/[0.06]"
                       placeholder="••••••••"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 transition-colors hover:text-purple-400"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
                   </div>
                 </div>
               )}
 
+              {/* Confirm Password */}
               {(mode === 'invite' || mode === 'signup') && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm Password</label>
-                  <div className="relative mt-1.5">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <label className="mb-1.5 block text-xs font-medium text-gray-400 uppercase tracking-wider">Confirm Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       required
                       minLength={6}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="block w-full rounded-xl border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="block w-full rounded-xl border border-white/[0.06] bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-white placeholder-gray-500 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:bg-white/[0.06]"
                       placeholder="••••••••"
                     />
                   </div>
                 </div>
               )}
 
+              {/* Forgot password */}
               {mode === 'login' && (
                 <div className="flex justify-end">
-                  <button type="button" onClick={() => switchMode('reset')} className="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
+                  <button type="button" onClick={() => switchMode('reset')} className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
                     Forgot password?
                   </button>
                 </div>
               )}
 
+              {/* Error */}
               {error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-sm text-red-400 backdrop-blur-sm">
                   {error}
                 </div>
               )}
 
+              {/* Success */}
               {success && (
-                <div className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-600 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+                <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-3.5 text-sm text-green-400 backdrop-blur-sm">
                   {success}
                 </div>
               )}
 
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:bg-indigo-700 hover:shadow-xl active:scale-[0.98] disabled:opacity-50"
+                className="relative flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:from-purple-500 hover:to-indigo-500 hover:shadow-xl hover:shadow-purple-500/30 active:scale-[0.98] disabled:opacity-50"
               >
+                {/* Shine effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700" />
                 {loading ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 ) : (
@@ -273,22 +350,22 @@ export function LoginPage() {
               </button>
             </form>
 
-            {/* Regular login mode — show Google option */}
+            {/* Google for login mode */}
             {mode === 'login' && (
               <>
-                <div className="relative my-5">
+                <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+                    <div className="w-full border-t border-white/[0.06]" />
                   </div>
                   <div className="relative flex justify-center text-xs">
-                    <span className="bg-white px-3 text-gray-400 dark:bg-gray-900 dark:text-gray-500">or</span>
+                    <span className="bg-[#0a0a1a] px-4 text-gray-500">or continue with</span>
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleGoogleSignIn}
-                  className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm font-medium text-gray-300 transition-all hover:bg-white/[0.06] hover:border-white/[0.1] active:scale-[0.98]"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -301,16 +378,21 @@ export function LoginPage() {
               </>
             )}
 
+            {/* Switch mode */}
             {mode !== 'reset' && mode !== 'invite' && (
-              <div className="mt-4 text-center">
-                <button onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')} className="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
-                  {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+              <div className="mt-6 text-center">
+                <button onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')} className="text-xs text-gray-500 transition-colors hover:text-purple-400">
+                  {mode === 'login' ? (
+                    <>Don't have an account? <span className="font-medium text-purple-400">Sign up</span></>
+                  ) : (
+                    <>Already have an account? <span className="font-medium text-purple-400">Sign in</span></>
+                  )}
                 </button>
               </div>
             )}
           </div>
 
-          <p className="mt-6 text-center text-[11px] text-gray-400 dark:text-gray-500">
+          <p className="mt-6 text-center text-[11px] text-gray-600">
             Internal team tool. Contact admin for access.
           </p>
         </div>

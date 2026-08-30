@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
+import { Menu } from 'lucide-react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useProjects } from '@/hooks/useProjects'
 import { supabase } from '@/lib/supabase'
@@ -47,6 +48,8 @@ export function AppLayout({ children }: AppLayoutProps) {
     return false
   })
   const [allTasks, setAllTasks] = useState<Task[]>([])
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true')
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
   // Fetch all tasks for dashboard
   useEffect(() => {
@@ -72,6 +75,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   useEffect(() => { localStorage.setItem('sortField', sortField) }, [sortField])
   useEffect(() => { localStorage.setItem('sortDirection', sortDirection) }, [sortDirection])
   useEffect(() => { localStorage.setItem('activeTab', activeTab) }, [activeTab])
+  useEffect(() => { localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed)) }, [sidebarCollapsed])
 
   if (typeof document !== 'undefined') {
     document.documentElement.classList.toggle('dark', darkMode)
@@ -136,6 +140,16 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      {/* Mobile hamburger */}
+      {!mobileSidebarOpen && (
+        <button
+          onClick={() => setMobileSidebarOpen(true)}
+          className="fixed top-3 left-3 z-50 flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 shadow-lg backdrop-blur-sm transition-all hover:bg-white dark:bg-gray-900/80 dark:hover:bg-gray-800 lg:hidden"
+        >
+          <Menu size={18} className="text-gray-600 dark:text-gray-300" />
+        </button>
+      )}
+
       <Sidebar
         projects={projects}
         activeProjectId={activeProjectId}
@@ -148,6 +162,10 @@ export function AppLayout({ children }: AppLayoutProps) {
         onDeleteProject={handleDeleteProject}
         darkMode={darkMode}
         onToggleDark={toggleDark}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        mobileOpen={mobileSidebarOpen}
+        onMobileClose={() => setMobileSidebarOpen(false)}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         {activeTab === 'admin' ? (

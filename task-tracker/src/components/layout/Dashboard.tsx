@@ -156,18 +156,28 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
             <div className="flex items-center justify-center">
               <div className="relative h-40 w-40">
                 <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-                  {/* Done */}
-                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#22c55e" strokeWidth="3"
-                    strokeDasharray={`${donutDone} ${100 - donutDone}`} strokeDashoffset="0" />
-                  {/* In Progress */}
-                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#3b82f6" strokeWidth="3"
-                    strokeDasharray={`${donutProgress} ${100 - donutProgress}`} strokeDashoffset={`${-donutDone}`} />
-                  {/* Todo */}
-                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#9ca3af" strokeWidth="3"
-                    strokeDasharray={`${donutTodo} ${100 - donutTodo}`} strokeDashoffset={`${-(donutDone + donutProgress)}`} />
-                  {/* Hold */}
-                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#f97316" strokeWidth="3"
-                    strokeDasharray={`${donutHold} ${100 - donutHold}`} strokeDashoffset={`${-(donutDone + donutProgress + donutTodo)}`} />
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="url(#gradDone)" strokeWidth="3"
+                    strokeDasharray={`${donutDone} ${100 - donutDone}`} strokeDashoffset="0" strokeLinecap="round" />
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="url(#gradProgress)" strokeWidth="3"
+                    strokeDasharray={`${donutProgress} ${100 - donutProgress}`} strokeDashoffset={`${-donutDone}`} strokeLinecap="round" />
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#52525b" strokeWidth="3"
+                    strokeDasharray={`${donutTodo} ${100 - donutTodo}`} strokeDashoffset={`${-(donutDone + donutProgress)}`} strokeLinecap="round" />
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="url(#gradHold)" strokeWidth="3"
+                    strokeDasharray={`${donutHold} ${100 - donutHold}`} strokeDashoffset={`${-(donutDone + donutProgress + donutTodo)}`} strokeLinecap="round" />
+                  <defs>
+                    <linearGradient id="gradDone" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#7c3aed" />
+                      <stop offset="100%" stopColor="#a855f7" />
+                    </linearGradient>
+                    <linearGradient id="gradProgress" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#6366f1" />
+                      <stop offset="100%" stopColor="#818cf8" />
+                    </linearGradient>
+                    <linearGradient id="gradHold" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#f97316" />
+                      <stop offset="100%" stopColor="#fb923c" />
+                    </linearGradient>
+                  </defs>
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</span>
@@ -214,28 +224,35 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
           </div>
 
           {/* Priority Histogram */}
-          <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-white to-orange-50/50 p-6 shadow-sm dark:border-orange-900/30 dark:from-gray-900 dark:to-orange-950/20">
-            <div className="mb-4 flex items-center gap-2">
-              <BarChart3 size={18} className="text-orange-500" />
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Priority Breakdown</h3>
+          <div className="rounded-2xl border border-purple-100 bg-gradient-to-br from-white to-purple-50/50 p-6 shadow-sm dark:border-purple-900/30 dark:from-gray-900 dark:to-purple-950/20">
+            <div className="mb-5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BarChart3 size={18} className="text-purple-500" />
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Priority Breakdown</h3>
+              </div>
+              <span className="text-xs text-gray-400">{allTasks.length} total</span>
             </div>
-            <div className="flex items-end justify-around gap-2" style={{ height: '140px' }}>
+            <div className="flex items-end justify-center gap-6 px-4" style={{ height: '180px' }}>
               {priorityStats.map((p) => {
                 const maxPriority = Math.max(...priorityStats.map((x) => x.count), 1)
-                const height = (p.count / maxPriority) * 100
+                const barHeightPx = Math.max((p.count / maxPriority) * 140, 8)
                 return (
-                  <div key={p.value} className="flex flex-1 flex-col items-center gap-1">
-                    <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400">{p.count}</span>
-                    <div className="w-full max-w-[40px] rounded-t-lg transition-all duration-500"
+                  <div key={p.value} className="flex flex-1 flex-col items-center">
+                    <span className="mb-1.5 text-sm font-bold text-gray-700 dark:text-gray-200">{p.count}</span>
+                    <div className="w-full max-w-[52px] rounded-2xl transition-all duration-700"
                       style={{
-                        height: `${Math.max(height, 4)}%`,
-                        background: p.value === 'critical' ? '#ef4444' :
-                                   p.value === 'high' ? '#f97316' :
-                                   p.value === 'medium' ? '#eab308' :
-                                   p.value === 'low' ? '#22c55e' : '#6366f1'
+                        height: `${barHeightPx}px`,
+                        background: p.value === 'critical' ? 'linear-gradient(to top, #7c3aed, #c084fc)' :
+                                   p.value === 'high' ? 'linear-gradient(to top, #6366f1, #a5b4fc)' :
+                                   p.value === 'medium' ? 'linear-gradient(to top, #8b5cf6, #d8b4fe)' :
+                                   'linear-gradient(to top, #a78bfa, #ede9fe)',
+                        boxShadow: p.value === 'critical' ? '0 4px 14px rgba(124,58,237,0.3)' :
+                                   p.value === 'high' ? '0 4px 14px rgba(99,102,241,0.3)' :
+                                   p.value === 'medium' ? '0 4px 14px rgba(139,92,246,0.25)' :
+                                   '0 4px 14px rgba(167,139,250,0.2)'
                       }}
                     />
-                    <span className="text-[9px] text-gray-400 capitalize">{p.label}</span>
+                    <span className="mt-2 text-[11px] font-medium text-gray-500 dark:text-gray-400 capitalize">{p.label}</span>
                   </div>
                 )
               })}
