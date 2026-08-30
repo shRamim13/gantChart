@@ -177,7 +177,7 @@ serve(async (req) => {
     let htmlContent = ""
 
     if (type === "invitation") {
-      const inviteLink = `${SITE_URL}?invite=${payload.invite_token}`
+      const inviteLink = `${SITE_URL}?invite=${encodeURIComponent(to_email)}`
       subject = `${payload.inviter_name || "Someone"} invited you to join Gantt Chart`
       htmlContent = buildInvitationHtml(to_name || "", payload.inviter_name || "A team member", payload.role || "User", inviteLink)
     }

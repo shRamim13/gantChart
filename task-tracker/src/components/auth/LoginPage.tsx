@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from './AuthProvider'
 import { LogIn, Mail, Lock, LayoutGrid, ArrowLeft, BarChart3, CheckCircle, Users } from 'lucide-react'
 
@@ -12,6 +12,19 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
+  const [invitedEmail, setInvitedEmail] = useState('')
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const inviteEmail = params.get('invite')
+    if (inviteEmail) {
+      setEmail(inviteEmail)
+      setInvitedEmail(inviteEmail)
+      setMode('login')
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -95,16 +108,24 @@ export function LoginPage() {
 
           <div className="mb-8 hidden lg:block">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {mode === 'login' && 'Welcome back'}
+              {invitedEmail && mode === 'login' && 'You\'re invited!'}
+              {!invitedEmail && mode === 'login' && 'Welcome back'}
               {mode === 'signup' && 'Create account'}
               {mode === 'reset' && 'Reset password'}
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {mode === 'login' && 'Sign in to continue to your workspace'}
+              {invitedEmail && mode === 'login' && `Sign in with ${invitedEmail} to join the team`}
+              {!invitedEmail && mode === 'login' && 'Sign in to continue to your workspace'}
               {mode === 'signup' && 'Join your team on Task Tracker'}
               {mode === 'reset' && "We'll send you a reset link"}
             </p>
           </div>
+
+          {invitedEmail && (
+            <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-700 dark:border-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400">
+              You've been invited to join the team. Sign in or create an account with <strong>{invitedEmail}</strong>.
+            </div>
+          )}
 
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-gray-200/50 dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
             {mode === 'reset' && (
@@ -127,7 +148,8 @@ export function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full rounded-xl border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    readOnly={!!invitedEmail}
+                    className="block w-full rounded-xl border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800"
                     placeholder="you@company.com"
                   />
                 </div>
