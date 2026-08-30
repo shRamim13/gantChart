@@ -321,6 +321,15 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
                   )}
                   <PriorityIcon priority={child.priority} />
                   <StatusBadge status={child.status} />
+                  {canEdit && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onEdit(child) }}
+                      className="rounded p-1 text-gray-400 opacity-0 transition-opacity hover:bg-blue-50 hover:text-blue-500 group-hover:opacity-100 dark:hover:bg-blue-900/20"
+                      title="Edit subtask"
+                    >
+                      <Edit size={12} />
+                    </button>
+                  )}
                   {perms.canDeleteSubtask && (
                     <button
                       onClick={(e) => {
