@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { sendInvitationEmail } from '@/lib/email'
 import type { Invitation, UserRole } from '@/types'
 
 export function useInvitations() {
@@ -71,18 +72,26 @@ export function useInvitations() {
         return { error: error.message }
       }
 
-      // Send actual email via Supabase auth magic link
-      const { error: emailError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
-      })
+      // Send invitation email via Brevo
+      const { data: inviterProfile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single()
 
-      if (emailError) {
-        console.warn('Email send failed (invitation still saved):', emailError.message)
-        // Still return success — invitation is saved, admin can share link manually
-        return { data: data as Invitation | null, error: undefined, emailFailed: true }
+      if (data) {
+        try {
+          await sendInvitationEmail(
+            email,
+            '',
+            data.id,
+            inviterProfile?.name || 'A team member',
+            role
+          )
+        } catch (emailErr) {
+          console.warn('Email send failed (invitation still saved):', emailErr)
+          return { data: data as Invitation | null, error: undefined, emailFailed: true }
+        }
       }
 
       if (data) setInvitations((prev) => [data as Invitation, ...prev])

@@ -8,8 +8,10 @@ import { PriorityIcon } from '@/components/ui/PriorityIcon'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/Button'
 import { SlideOver } from '@/components/ui/SlideOver'
+import { MentionInput } from '@/components/ui/MentionInput'
 import { useAttachments } from '@/hooks/useAttachments'
 import { useComments } from '@/hooks/useComments'
+import { sendMentionEmail } from '@/lib/email'
 import { cn } from '@/lib/utils'
 import { format, formatDistanceToNow } from 'date-fns'
 
@@ -89,6 +91,26 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
     if (result.error) {
       toast.error(result.error)
     } else {
+      // Detect @mentions and send emails
+      const mentionRegex = /@(\S+)/g
+      let match
+      while ((match = mentionRegex.exec(text)) !== null) {
+        const mentionName = match[1]
+        const mentioned = profiles.find(
+          (p) => p.name.toLowerCase() === mentionName.toLowerCase() ||
+                 p.email.toLowerCase() === mentionName.toLowerCase()
+        )
+        if (mentioned && mentioned.id !== profile.id && mentioned.email) {
+          sendMentionEmail(
+            mentioned.email,
+            mentioned.name,
+            profile.name,
+            text,
+            task!.title
+          )
+        }
+      }
+
       if (parentId) {
         setReplyText('')
         setReplyingTo(null)
@@ -473,20 +495,13 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
                       {/* Reply input for this comment */}
                       {replyingTo === comment.id && (
                         <div className="ml-8 mt-2 flex items-start gap-2">
-                          <textarea
-                            autoFocus
+                          <MentionInput
                             value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && replyText.trim()) {
-                                e.preventDefault()
-                                handleAddComment(comment.id)
-                              }
-                              if (e.key === 'Escape') { setReplyingTo(null); setReplyText('') }
-                            }}
-                            rows={2}
-                            className="flex-1 rounded-lg border border-indigo-200 bg-indigo-50/50 px-3 py-2 text-xs text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:border-indigo-800 dark:bg-indigo-900/10 dark:text-white resize-none"
+                            onChange={setReplyText}
+                            onSubmit={() => handleAddComment(comment.id)}
+                            profiles={profiles.filter((p) => p.id !== profile?.id)}
                             placeholder={`Reply to ${commenter?.name || 'Unknown'}... (Ctrl+Enter to send)`}
+                            rows={2}
                           />
                           <div className="flex flex-col gap-1">
                             <button
@@ -526,18 +541,13 @@ export function TaskDetailPanel({ task, open, onClose, onUpdate, onDelete, onEdi
           {/* Comment input */}
           {canEdit && (
             <div className="flex items-start gap-2">
-              <textarea
+              <MentionInput
                 value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && newComment.trim()) {
-                    e.preventDefault()
-                    handleAddComment()
-                  }
-                }}
+                onChange={setNewComment}
+                onSubmit={() => handleAddComment()}
+                profiles={profiles.filter((p) => p.id !== profile?.id)}
+                placeholder="Add a comment... Type @ to mention (Ctrl+Enter to send)"
                 rows={2}
-                className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white resize-none"
-                placeholder="Add a comment... (Ctrl+Enter to send)"
               />
               <button
                 onClick={() => handleAddComment()}
