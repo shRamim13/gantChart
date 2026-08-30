@@ -82,7 +82,18 @@ export function AppLayout({ children }: AppLayoutProps) {
   function handleSelectProject(id: string) {
     setActiveProjectId(id)
     setActiveEpicId(null)
+    setActiveTab('projects')
   }
+
+  // Listen for deselect-project event from sidebar
+  useEffect(() => {
+    const handler = () => {
+      setActiveProjectId(null)
+      localStorage.removeItem('activeProjectId')
+    }
+    window.addEventListener('deselect-project', handler)
+    return () => window.removeEventListener('deselect-project', handler)
+  }, [])
 
   function handleCreateProject(name: string, shortName: string) {
     const promise = createProject(name, shortName).then((result) => {
