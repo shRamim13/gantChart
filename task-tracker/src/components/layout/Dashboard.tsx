@@ -70,21 +70,21 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
 
   return (
     <div className="h-full overflow-auto bg-gray-50 dark:bg-gray-950">
-      <div className="mx-auto max-w-6xl px-6 py-8">
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         {/* Welcome Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+          <div className="pl-10 lg:pl-0">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
               Welcome back, {profile?.name?.split(' ')[0] || 'there'}
             </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
               Here's what's happening with your projects today.
             </p>
           </div>
           {canCreateProject && (
             <button
               onClick={onCreateProject}
-              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-700 active:scale-[0.98]"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-700 active:scale-[0.98]"
             >
               <Plus size={16} />
               New Project
@@ -93,7 +93,7 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
         </div>
 
         {/* Stats Grid */}
-        <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:gap-4 lg:grid-cols-4">
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
@@ -136,7 +136,7 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
         </div>
 
         {/* Charts Row */}
-        <div className="mb-8 grid gap-6 lg:grid-cols-3">
+        <div className="mb-6 grid gap-4 sm:mb-8 sm:gap-6 lg:grid-cols-3">
           {/* Donut Chart */}
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="mb-4 flex items-center gap-2">
@@ -234,7 +234,7 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
         </div>
 
         {/* Projects + Recent Tasks */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
           {/* Projects */}
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="mb-4 flex items-center justify-between">
