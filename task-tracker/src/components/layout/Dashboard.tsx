@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { FolderOpen, CheckCircle, Clock, AlertTriangle, TrendingUp, Plus, ArrowRight, Sparkles } from 'lucide-react'
+import { FolderOpen, CheckCircle, Clock, AlertTriangle, Plus, ArrowRight, Sparkles, BarChart3 } from 'lucide-react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useProjects } from '@/hooks/useProjects'
 import type { Task } from '@/types'
-import { STATUS_OPTIONS } from '@/types'
+import { STATUS_OPTIONS, PRIORITY_OPTIONS, getPermissions } from '@/types'
 import { cn } from '@/lib/utils'
 
 interface DashboardProps {
@@ -15,12 +15,15 @@ interface DashboardProps {
 export function Dashboard({ allTasks, onSelectProject, onCreateProject }: DashboardProps) {
   const { profile } = useAuth()
   const { projects } = useProjects(profile?.role)
+  const perms = profile ? getPermissions(profile.role) : getPermissions('viewer')
+  const canCreateProject = perms.canCreateProject
 
   const stats = useMemo(() => {
     const myTasks = allTasks.filter((t) => t.assignee_id === profile?.id)
     const completed = allTasks.filter((t) => t.status === 'done').length
     const inProgress = allTasks.filter((t) => t.status === 'in_progress').length
     const todo = allTasks.filter((t) => t.status === 'todo').length
+    const hold = allTasks.filter((t) => t.status === 'hold').length
     const overdue = allTasks.filter((t) => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done').length
     const myCompleted = myTasks.filter((t) => t.status === 'done').length
 
@@ -29,6 +32,7 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
       completed,
       inProgress,
       todo,
+      hold,
       overdue,
       myTasks: myTasks.length,
       myCompleted,
@@ -36,11 +40,40 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
     }
   }, [allTasks, profile?.id])
 
+  // Priority distribution
+  const priorityStats = useMemo(() => {
+    return PRIORITY_OPTIONS.map((p) => ({
+      ...p,
+      count: allTasks.filter((t) => t.priority === p.value).length,
+    }))
+  }, [allTasks])
+
+  // Tasks per project (bar chart data)
+  const projectStats = useMemo(() => {
+    return projects.map((p) => {
+      const tasks = allTasks.filter((t) => t.project_id === p.id)
+      return {
+        name: p.short_name || p.name.slice(0, 6),
+        total: tasks.length,
+        done: tasks.filter((t) => t.status === 'done').length,
+      }
+    }).filter((p) => p.total > 0).slice(0, 6)
+  }, [allTasks, projects])
+
+  const maxProjectTasks = Math.max(...projectStats.map((p) => p.total), 1)
+
   const recentTasks = useMemo(() => {
     return [...allTasks]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 6)
+      .slice(0, 5)
   }, [allTasks])
+
+  // Donut chart values
+  const donutTotal = stats.total || 1
+  const donutDone = (stats.completed / donutTotal) * 100
+  const donutProgress = (stats.inProgress / donutTotal) * 100
+  const donutTodo = (stats.todo / donutTotal) * 100
+  const donutHold = (stats.hold / donutTotal) * 100
 
   return (
     <div className="h-full overflow-auto bg-gradient-to-br from-gray-50 via-indigo-50/30 to-purple-50/20 dark:from-gray-950 dark:via-indigo-950/10 dark:to-purple-950/10">
@@ -58,13 +91,15 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
               Here's what's happening with your projects today.
             </p>
           </div>
-          <button
-            onClick={onCreateProject}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:from-indigo-600 hover:to-purple-700 hover:shadow-xl active:scale-[0.98]"
-          >
-            <Plus size={16} />
-            New Project
-          </button>
+          {canCreateProject && (
+            <button
+              onClick={onCreateProject}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:from-indigo-600 hover:to-purple-700 hover:shadow-xl active:scale-[0.98]"
+            >
+              <Plus size={16} />
+              New Project
+            </button>
+          )}
         </div>
 
         {/* Stats Grid */}
@@ -110,40 +145,107 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Progress Card */}
+        {/* Charts Row */}
+        <div className="mb-8 grid gap-6 lg:grid-cols-3">
+          {/* Donut Chart — Status Distribution */}
           <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/50 p-6 shadow-sm dark:border-indigo-900/30 dark:from-gray-900 dark:to-indigo-950/20">
             <div className="mb-4 flex items-center gap-2">
-              <TrendingUp size={18} className="text-indigo-500" />
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Overall Progress</h3>
+              <BarChart3 size={18} className="text-indigo-500" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Status Distribution</h3>
             </div>
-            <div className="mb-2 flex items-end gap-2">
-              <span className="text-4xl font-bold text-indigo-600 dark:text-indigo-400">{stats.completionRate}%</span>
-              <span className="mb-1 text-xs text-gray-400">completed</span>
+            <div className="flex items-center justify-center">
+              <div className="relative h-40 w-40">
+                <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
+                  {/* Done */}
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#22c55e" strokeWidth="3"
+                    strokeDasharray={`${donutDone} ${100 - donutDone}`} strokeDashoffset="0" />
+                  {/* In Progress */}
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#3b82f6" strokeWidth="3"
+                    strokeDasharray={`${donutProgress} ${100 - donutProgress}`} strokeDashoffset={`${-donutDone}`} />
+                  {/* Todo */}
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#9ca3af" strokeWidth="3"
+                    strokeDasharray={`${donutTodo} ${100 - donutTodo}`} strokeDashoffset={`${-(donutDone + donutProgress)}`} />
+                  {/* Hold */}
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#f97316" strokeWidth="3"
+                    strokeDasharray={`${donutHold} ${100 - donutHold}`} strokeDashoffset={`${-(donutDone + donutProgress + donutTodo)}`} />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</span>
+                  <span className="text-[10px] text-gray-400">tasks</span>
+                </div>
+              </div>
             </div>
-            <div className="h-3 w-full overflow-hidden rounded-full bg-indigo-100 dark:bg-indigo-900/30">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
-                style={{ width: `${stats.completionRate}%` }}
-              />
-            </div>
-            <div className="mt-5 space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500 dark:text-gray-400">My Tasks</span>
-                <span className="font-medium text-gray-700 dark:text-gray-300">{stats.myCompleted}/{stats.myTasks}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500 dark:text-gray-400">Total Done</span>
-                <span className="font-medium text-gray-700 dark:text-gray-300">{stats.completed}/{stats.total}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500 dark:text-gray-400">To Do</span>
-                <span className="font-medium text-gray-700 dark:text-gray-300">{stats.todo}</span>
-              </div>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="flex items-center gap-2"><div className="h-2.5 w-2.5 rounded-full bg-green-500" /><span className="text-[11px] text-gray-500">Done ({stats.completed})</span></div>
+              <div className="flex items-center gap-2"><div className="h-2.5 w-2.5 rounded-full bg-blue-500" /><span className="text-[11px] text-gray-500">Active ({stats.inProgress})</span></div>
+              <div className="flex items-center gap-2"><div className="h-2.5 w-2.5 rounded-full bg-gray-400" /><span className="text-[11px] text-gray-500">To Do ({stats.todo})</span></div>
+              <div className="flex items-center gap-2"><div className="h-2.5 w-2.5 rounded-full bg-orange-500" /><span className="text-[11px] text-gray-500">Hold ({stats.hold})</span></div>
             </div>
           </div>
 
-          {/* Projects Quick Access */}
+          {/* Bar Chart — Tasks per Project */}
+          <div className="rounded-2xl border border-purple-100 bg-gradient-to-br from-white to-purple-50/50 p-6 shadow-sm dark:border-purple-900/30 dark:from-gray-900 dark:to-purple-950/20">
+            <div className="mb-4 flex items-center gap-2">
+              <BarChart3 size={18} className="text-purple-500" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Tasks per Project</h3>
+            </div>
+            <div className="space-y-3">
+              {projectStats.map((project) => (
+                <div key={project.name}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{project.name}</span>
+                    <span className="text-gray-400">{project.done}/{project.total}</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden rounded-full bg-purple-100 dark:bg-purple-900/30">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 transition-all duration-500"
+                      style={{ width: `${(project.total / maxProjectTasks) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              {projectStats.length === 0 && (
+                <div className="py-6 text-center">
+                  <BarChart3 size={24} className="mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                  <p className="text-xs text-gray-400">No project data yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Priority Histogram */}
+          <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-white to-orange-50/50 p-6 shadow-sm dark:border-orange-900/30 dark:from-gray-900 dark:to-orange-950/20">
+            <div className="mb-4 flex items-center gap-2">
+              <BarChart3 size={18} className="text-orange-500" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Priority Breakdown</h3>
+            </div>
+            <div className="flex items-end justify-around gap-2" style={{ height: '140px' }}>
+              {priorityStats.map((p) => {
+                const maxPriority = Math.max(...priorityStats.map((x) => x.count), 1)
+                const height = (p.count / maxPriority) * 100
+                return (
+                  <div key={p.value} className="flex flex-1 flex-col items-center gap-1">
+                    <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400">{p.count}</span>
+                    <div className="w-full max-w-[40px] rounded-t-lg transition-all duration-500"
+                      style={{
+                        height: `${Math.max(height, 4)}%`,
+                        background: p.value === 'critical' ? '#ef4444' :
+                                   p.value === 'high' ? '#f97316' :
+                                   p.value === 'medium' ? '#eab308' :
+                                   p.value === 'low' ? '#22c55e' : '#6366f1'
+                      }}
+                    />
+                    <span className="text-[9px] text-gray-400 capitalize">{p.label}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Projects + Recent Tasks */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Projects */}
           <div className="rounded-2xl border border-purple-100 bg-gradient-to-br from-white to-purple-50/50 p-6 shadow-sm dark:border-purple-900/30 dark:from-gray-900 dark:to-purple-950/20">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -169,10 +271,7 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-gray-700 dark:text-gray-300">{project.name}</p>
                       <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-purple-100 dark:bg-purple-900/30">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 transition-all"
-                          style={{ width: `${pct}%` }}
-                        />
+                        <div className="h-full rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 transition-all" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                     <div className="text-right">
@@ -182,16 +281,10 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
                   </button>
                 )
               })}
-              {projects.length === 0 && (
-                <div className="py-6 text-center">
-                  <FolderOpen size={24} className="mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                  <p className="text-xs text-gray-400">No projects yet</p>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Recent Activity */}
+          {/* Recent Tasks */}
           <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/50 p-6 shadow-sm dark:border-indigo-900/30 dark:from-gray-900 dark:to-indigo-950/20">
             <div className="mb-4 flex items-center gap-2">
               <Clock size={18} className="text-indigo-500" />
@@ -206,8 +299,7 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
                       'h-2.5 w-2.5 rounded-full',
                       task.status === 'done' ? 'bg-green-500' :
                       task.status === 'in_progress' ? 'bg-blue-500' :
-                      task.status === 'hold' ? 'bg-orange-500' :
-                      'bg-gray-300'
+                      task.status === 'hold' ? 'bg-orange-500' : 'bg-gray-300'
                     )} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-medium text-gray-700 dark:text-gray-300">{task.title}</p>
@@ -235,7 +327,7 @@ export function Dashboard({ allTasks, onSelectProject, onCreateProject }: Dashbo
           <div className="mt-6 rounded-2xl border border-gray-100 bg-white/80 p-6 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
             <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
             <div className="flex flex-wrap gap-3">
-              {projects.slice(0, 3).map((project) => (
+              {projects.slice(0, 4).map((project) => (
                 <button
                   key={project.id}
                   onClick={() => onSelectProject(project.id)}
