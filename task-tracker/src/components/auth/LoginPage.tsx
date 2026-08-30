@@ -40,9 +40,19 @@ export function LoginPage() {
       }
       const result = await signUp(email, password)
       if (result.error) {
-        setError(result.error)
+        // If email already exists, try signing in instead
+        if (result.error.includes('already') || result.error.includes('registered') || result.error.includes('exists')) {
+          const signInResult = await signIn(email, password)
+          if (signInResult.error) {
+            setError('Account exists with Google. Please use "Sign in with Google" instead.')
+          }
+        } else {
+          setError(result.error)
+        }
       } else {
-        setSuccess('Account created! Check your email for confirmation link.')
+        setSuccess('Account created! Signing you in...')
+        // Auto sign-in after signup
+        await signIn(email, password)
       }
     } else if (mode === 'login') {
       const result = await signIn(email, password)
