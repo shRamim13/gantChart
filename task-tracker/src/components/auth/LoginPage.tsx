@@ -98,7 +98,7 @@ export function LoginPage() {
         <div className={`relative z-10 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           {/* Logo */}
           <div className="mb-12 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-500">
               <LayoutGrid className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -110,7 +110,7 @@ export function LoginPage() {
           {/* Heading */}
           <h1 className="text-5xl font-extrabold leading-[1.1] tracking-tight text-white" style={{ fontFamily: 'var(--font-display)' }}>
             Ship projects<br />
-            <span className="text-blue-400">faster, together</span>
+            <span className="text-teal-400">faster, together</span>
           </h1>
           <p className="mt-5 max-w-md text-base text-slate-400 leading-relaxed">
             Plan sprints, track progress, and deliver with your team — all in one workspace.
@@ -130,7 +130,7 @@ export function LoginPage() {
                 style={{ transitionDelay: `${300 + idx * 80}ms` }}
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800">
-                  <Icon size={16} className="text-blue-400" />
+                  <Icon size={16} className="text-teal-400" />
                 </div>
                 <span className="text-sm text-slate-300">{text}</span>
               </div>
@@ -144,7 +144,7 @@ export function LoginPage() {
         <div className={`w-full max-w-md transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`} style={{ transitionDelay: '150ms' }}>
           {/* Mobile logo */}
           <div className="mb-8 text-center lg:hidden">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-teal-500">
               <LayoutGrid className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>TaskFlow</h1>
@@ -169,8 +169,8 @@ export function LoginPage() {
 
           {/* Invite banner */}
           {invitedEmail && (
-            <div className="mb-5 rounded-xl border border-blue-500/20 bg-blue-500/10 p-3.5 text-sm text-blue-300">
-              <strong className="text-blue-200">You've been invited!</strong> Create your account with <strong className="text-blue-200">{invitedEmail}</strong>
+            <div className="mb-5 rounded-xl border border-teal-500/20 bg-teal-500/10 p-3.5 text-sm text-teal-300">
+              <strong className="text-teal-200">You've been invited!</strong> Create your account with <strong className="text-teal-200">{invitedEmail}</strong>
             </div>
           )}
 
@@ -227,7 +227,7 @@ export function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     readOnly={!!invitedEmail && mode === 'invite'}
-                    className="block w-full rounded-xl border border-slate-600 bg-slate-700/50 py-2.5 pl-11 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="block w-full rounded-xl border border-slate-600 bg-slate-700/50 py-2.5 pl-11 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder="you@company.com"
                   />
                 </div>
@@ -245,7 +245,7 @@ export function LoginPage() {
                       minLength={6}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full rounded-xl border border-slate-600 bg-slate-700/50 py-2.5 pl-11 pr-11 text-sm text-white placeholder-slate-500 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      className="block w-full rounded-xl border border-slate-600 bg-slate-700/50 py-2.5 pl-11 pr-11 text-sm text-white placeholder-slate-500 transition-all focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                       placeholder="••••••••"
                     />
                     <button
@@ -271,7 +271,7 @@ export function LoginPage() {
                       minLength={6}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="block w-full rounded-xl border border-slate-600 bg-slate-700/50 py-2.5 pl-11 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      className="block w-full rounded-xl border border-slate-600 bg-slate-700/50 py-2.5 pl-11 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                       placeholder="••••••••"
                     />
                   </div>
@@ -281,7 +281,7 @@ export function LoginPage() {
               {/* Forgot password */}
               {mode === 'login' && (
                 <div className="flex justify-end">
-                  <button type="button" onClick={() => switchMode('reset')} className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                  <button type="button" onClick={() => switchMode('reset')} className="text-xs text-teal-400 hover:text-teal-300 transition-colors">
                     Forgot password?
                   </button>
                 </div>
@@ -305,7 +305,7 @@ export function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="relative flex w-full items-center justify-center gap-2.5 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-500 active:scale-[0.98] disabled:opacity-50"
+                className="relative flex w-full items-center justify-center gap-2.5 rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-all hover:bg-teal-400 active:scale-[0.98] disabled:opacity-50"
               >
                 {loading ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -354,9 +354,9 @@ export function LoginPage() {
               <div className="mt-5 text-center">
                 <button onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')} className="text-xs text-slate-500 transition-colors hover:text-slate-300">
                   {mode === 'login' ? (
-                    <>Don't have an account? <span className="font-medium text-blue-400">Sign up</span></>
+                    <>Don't have an account? <span className="font-medium text-teal-400">Sign up</span></>
                   ) : (
-                    <>Already have an account? <span className="font-medium text-blue-400">Sign in</span></>
+                    <>Already have an account? <span className="font-medium text-teal-400">Sign in</span></>
                   )}
                 </button>
               </div>
