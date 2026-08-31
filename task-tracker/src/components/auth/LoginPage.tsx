@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './AuthProvider'
-import { LogIn, Mail, Lock, LayoutGrid, ArrowLeft, BarChart3, CheckCircle, Users, Eye, EyeOff, Zap } from 'lucide-react'
+import { LogIn, Mail, Lock, ArrowLeft, BarChart3, CheckCircle, Users, Eye, EyeOff, Zap } from 'lucide-react'
 
 type Mode = 'login' | 'signup' | 'reset' | 'invite'
 
@@ -98,9 +98,7 @@ export function LoginPage() {
         <div className={`relative z-10 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           {/* Logo */}
           <div className="mb-12 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-500">
-              <LayoutGrid className="h-6 w-6 text-white" />
-            </div>
+            <img src="/logo.svg" alt="TaskFlow" className="h-12 w-12" />
             <div>
               <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>TaskFlow</h2>
               <p className="text-xs text-slate-400">Project Management</p>
@@ -144,9 +142,7 @@ export function LoginPage() {
         <div className={`w-full max-w-md transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`} style={{ transitionDelay: '150ms' }}>
           {/* Mobile logo */}
           <div className="mb-8 text-center lg:hidden">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-teal-500">
-              <LayoutGrid className="h-6 w-6 text-white" />
-            </div>
+            <img src="/logo.svg" alt="TaskFlow" className="mx-auto mb-4 h-12 w-12" />
             <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>TaskFlow</h1>
             <p className="text-xs text-slate-400">Project Management</p>
           </div>

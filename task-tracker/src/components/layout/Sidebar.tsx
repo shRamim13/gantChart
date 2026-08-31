@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FolderOpen, LayoutGrid, Sun, Moon, LogOut, Plus, Trash2, X, Shield, ChevronRight, ChevronDown, Home, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { FolderOpen, Sun, Moon, LogOut, Plus, Trash2, X, Shield, ChevronRight, ChevronDown, Home, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { EpicPanel } from '@/components/epics/EpicPanel'
@@ -81,19 +81,15 @@ export function Sidebar({ projects, activeProjectId, activeEpicId, activeTab, on
         <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 dark:border-gray-800">
           {!isCollapsed && (
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
-                <LayoutGrid className="h-4.5 w-4.5 text-white" />
-              </div>
+              <img src="/logo.svg" alt="TaskFlow" className="h-9 w-9" />
               <div>
-                <span className="text-sm font-bold text-gray-900 dark:text-white">Gantt Chart</span>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500">Task Tracker</p>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">TaskFlow</span>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500">Project Management</p>
               </div>
             </div>
           )}
           {isCollapsed && (
-            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
-              <LayoutGrid className="h-4.5 w-4.5 text-white" />
-            </div>
+            <img src="/logo.svg" alt="TaskFlow" className="mx-auto h-9 w-9" />
           )}
           {!isCollapsed && (
             <button
