@@ -97,22 +97,22 @@ export function LoginPage() {
 
         <div className={`relative z-10 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           {/* Logo */}
-          <div className="mb-10 flex items-center gap-3">
+          <div className="mb-12 flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
               <LayoutGrid className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">TaskFlow</h2>
+              <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>TaskFlow</h2>
               <p className="text-xs text-slate-400">Project Management</p>
             </div>
           </div>
 
           {/* Heading */}
-          <h1 className="text-4xl font-bold leading-tight text-white">
+          <h1 className="text-5xl font-extrabold leading-[1.1] tracking-tight text-white" style={{ fontFamily: 'var(--font-display)' }}>
             Ship projects<br />
             <span className="text-blue-400">faster, together</span>
           </h1>
-          <p className="mt-4 max-w-md text-base text-slate-400 leading-relaxed">
+          <p className="mt-5 max-w-md text-base text-slate-400 leading-relaxed">
             Plan sprints, track progress, and deliver with your team — all in one workspace.
           </p>
 
@@ -147,13 +147,13 @@ export function LoginPage() {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
               <LayoutGrid className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-white">TaskFlow</h1>
+            <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>TaskFlow</h1>
             <p className="text-xs text-slate-400">Project Management</p>
           </div>
 
           {/* Title */}
           <div className="mb-7">
-            <h2 className="text-2xl font-bold text-white">
+            <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
               {mode === 'invite' && "You're invited!"}
               {mode === 'login' && 'Welcome back'}
               {mode === 'signup' && 'Create your account'}

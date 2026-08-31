@@ -10,6 +10,8 @@
   --color-dark-sidebar-border: #2d2d44;
   --color-dark-topbar: #16213e;
   --color-dark-topbar-border: #2d2d44;
+
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
