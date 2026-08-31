@@ -106,16 +106,22 @@ export function LoginPage() {
           </div>
 
           {/* Heading */}
-          <h1 className="text-5xl font-extrabold leading-[1.1] tracking-tight text-white" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-5xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl" style={{ fontFamily: 'var(--font-display)' }}>
             Ship projects<br />
-            <span className="text-teal-400">faster, together</span>
+            <span className="bg-gradient-to-r from-teal-300 via-teal-400 to-emerald-400 bg-clip-text text-transparent">faster, together</span>
           </h1>
-          <p className="mt-5 max-w-md text-base text-slate-400 leading-relaxed">
+          <p className="mt-6 max-w-md text-base text-slate-400 leading-relaxed">
             Plan sprints, track progress, and deliver with your team — all in one workspace.
           </p>
 
+          {/* Badge */}
+          <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-4 py-1.5">
+            <div className="h-1.5 w-1.5 rounded-full bg-teal-400 animate-pulse" />
+            <span className="text-xs font-medium text-teal-300">Trusted by teams worldwide</span>
+          </div>
+
           {/* Feature list */}
-          <div className="mt-12 space-y-4">
+          <div className="mt-8 space-y-3">
             {[
               { icon: BarChart3, text: 'Gantt timelines & sprint boards' },
               { icon: Users, text: 'Real-time team collaboration' },
@@ -125,10 +131,10 @@ export function LoginPage() {
               <div
                 key={text}
                 className={`flex items-center gap-3 transition-all duration-500 ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}
-                style={{ transitionDelay: `${300 + idx * 80}ms` }}
+                style={{ transitionDelay: `${400 + idx * 100}ms` }}
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800">
-                  <Icon size={16} className="text-teal-400" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700/50 bg-slate-800/50">
+                  <Icon size={14} className="text-teal-400" />
                 </div>
                 <span className="text-sm text-slate-300">{text}</span>
               </div>
