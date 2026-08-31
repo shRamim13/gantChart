@@ -83,83 +83,56 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden bg-[#0a0a1a]">
-      {/* Animated background */}
-      <div className="absolute inset-0">
-        {/* Gradient orbs */}
-        <div className="absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-purple-600/20 blur-[120px] animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute -right-32 top-1/3 h-[400px] w-[400px] rounded-full bg-indigo-600/20 blur-[120px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }} />
-        <div className="absolute -bottom-32 left-1/3 h-[350px] w-[350px] rounded-full bg-violet-600/15 blur-[120px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '2s' }} />
-
-        {/* Grid pattern */}
+    <div className="flex min-h-screen bg-slate-900">
+      {/* Left panel — Branding (desktop) */}
+      <div className="hidden relative lg:flex lg:w-[45%] flex-col justify-center px-16 overflow-hidden">
+        {/* Subtle dot pattern */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-            backgroundSize: '60px 60px',
+            backgroundImage: 'radial-gradient(circle, #94a3b8 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
           }}
         />
 
-        {/* Floating particles */}
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full bg-purple-400/20 animate-pulse"
-            style={{
-              width: `${Math.random() * 4 + 1}px`,
-              height: `${Math.random() * 4 + 1}px`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDuration: `${Math.random() * 3 + 2}s`,
-              animationDelay: `${Math.random() * 2}s`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Left panel — Branding (desktop) */}
-      <div className="hidden relative z-10 lg:flex lg:w-[45%] flex-col justify-center px-16">
-        <div className={`transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        <div className={`relative z-10 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           {/* Logo */}
           <div className="mb-10 flex items-center gap-3">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg shadow-purple-500/30">
-              <LayoutGrid className="h-7 w-7 text-white" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
+              <LayoutGrid className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">TaskFlow</h2>
-              <p className="text-xs text-purple-300/60">Project Management</p>
+              <h2 className="text-lg font-bold text-white">TaskFlow</h2>
+              <p className="text-xs text-slate-400">Project Management</p>
             </div>
           </div>
 
           {/* Heading */}
-          <h1 className="text-5xl font-bold leading-tight text-white">
-            <span className="bg-gradient-to-r from-purple-400 via-indigo-400 to-violet-400 bg-clip-text text-transparent">
-              Manage projects
-            </span>
-            <br />
-            <span className="text-white/90">like never before</span>
+          <h1 className="text-4xl font-bold leading-tight text-white">
+            Ship projects<br />
+            <span className="text-blue-400">faster, together</span>
           </h1>
-          <p className="mt-5 max-w-md text-base text-gray-400 leading-relaxed">
-            Plan sprints, track progress, and deliver with your team — all in one beautiful workspace.
+          <p className="mt-4 max-w-md text-base text-slate-400 leading-relaxed">
+            Plan sprints, track progress, and deliver with your team — all in one workspace.
           </p>
 
-          {/* Feature pills */}
+          {/* Feature list */}
           <div className="mt-12 space-y-4">
             {[
-              { icon: BarChart3, text: 'Gantt timelines & sprint boards', color: 'from-purple-500 to-purple-600' },
-              { icon: Users, text: 'Real-time team collaboration', color: 'from-indigo-500 to-indigo-600' },
-              { icon: CheckCircle, text: 'Track every task to completion', color: 'from-violet-500 to-violet-600' },
-              { icon: Zap, text: 'Lightning fast performance', color: 'from-fuchsia-500 to-fuchsia-600' },
-            ].map(({ icon: Icon, text, color }, idx) => (
+              { icon: BarChart3, text: 'Gantt timelines & sprint boards' },
+              { icon: Users, text: 'Real-time team collaboration' },
+              { icon: CheckCircle, text: 'Track every task to completion' },
+              { icon: Zap, text: 'Fast and responsive interface' },
+            ].map(({ icon: Icon, text }, idx) => (
               <div
                 key={text}
-                className={`flex items-center gap-4 transition-all duration-700 ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}
-                style={{ transitionDelay: `${400 + idx * 100}ms` }}
+                className={`flex items-center gap-3 transition-all duration-500 ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}
+                style={{ transitionDelay: `${300 + idx * 80}ms` }}
               >
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${color} shadow-lg`}>
-                  <Icon size={18} className="text-white" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800">
+                  <Icon size={16} className="text-blue-400" />
                 </div>
-                <span className="text-sm text-gray-300">{text}</span>
+                <span className="text-sm text-slate-300">{text}</span>
               </div>
             ))}
           </div>
@@ -167,26 +140,26 @@ export function LoginPage() {
       </div>
 
       {/* Right panel — Form */}
-      <div className="relative z-10 flex w-full items-center justify-center px-4 lg:w-[55%]">
-        <div className={`w-full max-w-md transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '200ms' }}>
+      <div className="relative flex w-full items-center justify-center px-4 lg:w-[55%]">
+        <div className={`w-full max-w-md transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`} style={{ transitionDelay: '150ms' }}>
           {/* Mobile logo */}
           <div className="mb-8 text-center lg:hidden">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg shadow-purple-500/30">
-              <LayoutGrid className="h-7 w-7 text-white" />
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
+              <LayoutGrid className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white">TaskFlow</h1>
-            <p className="text-xs text-purple-300/60">Project Management</p>
+            <h1 className="text-xl font-bold text-white">TaskFlow</h1>
+            <p className="text-xs text-slate-400">Project Management</p>
           </div>
 
           {/* Title */}
-          <div className="mb-8">
+          <div className="mb-7">
             <h2 className="text-2xl font-bold text-white">
               {mode === 'invite' && "You're invited!"}
               {mode === 'login' && 'Welcome back'}
               {mode === 'signup' && 'Create your account'}
               {mode === 'reset' && 'Reset password'}
             </h2>
-            <p className="mt-2 text-sm text-gray-400">
+            <p className="mt-2 text-sm text-slate-400">
               {mode === 'invite' && 'Create your account to join the team'}
               {mode === 'login' && 'Sign in to continue to your workspace'}
               {mode === 'signup' && 'Join your team on TaskFlow'}
@@ -196,31 +169,31 @@ export function LoginPage() {
 
           {/* Invite banner */}
           {invitedEmail && (
-            <div className="mb-5 rounded-2xl border border-purple-500/20 bg-purple-500/10 p-4 text-sm text-purple-300 backdrop-blur-sm">
-              <strong className="text-purple-200">You've been invited!</strong> Create your account with <strong className="text-purple-200">{invitedEmail}</strong>
+            <div className="mb-5 rounded-xl border border-blue-500/20 bg-blue-500/10 p-3.5 text-sm text-blue-300">
+              <strong className="text-blue-200">You've been invited!</strong> Create your account with <strong className="text-blue-200">{invitedEmail}</strong>
             </div>
           )}
 
-          {/* Glass card */}
-          <div className="rounded-3xl border border-white/[0.06] bg-white/[0.03] p-8 shadow-2xl shadow-black/20 backdrop-blur-xl">
+          {/* Card */}
+          <div className="rounded-2xl border border-slate-700/50 bg-slate-800/50 p-7 shadow-2xl backdrop-blur-sm">
             {/* Back button */}
             {(mode === 'reset' || mode === 'invite') && (
               <button
                 onClick={() => switchMode('login')}
-                className="mb-5 flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-purple-400"
+                className="mb-5 flex items-center gap-1.5 text-sm text-slate-400 transition-colors hover:text-white"
               >
                 <ArrowLeft size={14} />
                 {mode === 'invite' ? 'Already have an account? Sign in' : 'Back to login'}
               </button>
             )}
 
-            {/* Google Sign-In — Primary for invite mode */}
+            {/* Google Sign-In for invite */}
             {mode === 'invite' && (
               <>
                 <button
                   type="button"
                   onClick={handleGoogleSignIn}
-                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3.5 text-sm font-medium text-white transition-all hover:bg-white/[0.08] hover:border-white/[0.12] active:scale-[0.98]"
+                  className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-600 bg-slate-700/50 px-4 py-3 text-sm font-medium text-white transition-all hover:bg-slate-700 active:scale-[0.98]"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -231,30 +204,30 @@ export function LoginPage() {
                   Sign in with Google
                 </button>
 
-                <div className="relative my-6">
+                <div className="relative my-5">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/[0.06]" />
+                    <div className="w-full border-t border-slate-700" />
                   </div>
                   <div className="relative flex justify-center text-xs">
-                    <span className="bg-[#0a0a1a] px-4 text-gray-500">or set a password</span>
+                    <span className="bg-slate-800 px-4 text-slate-500">or set a password</span>
                   </div>
                 </div>
               </>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-400 uppercase tracking-wider">Email</label>
+                <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">Email</label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     readOnly={!!invitedEmail && mode === 'invite'}
-                    className="block w-full rounded-xl border border-white/[0.06] bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-white placeholder-gray-500 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="block w-full rounded-xl border border-slate-600 bg-slate-700/50 py-2.5 pl-11 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder="you@company.com"
                   />
                 </div>
@@ -263,22 +236,22 @@ export function LoginPage() {
               {/* Password */}
               {mode !== 'reset' && (
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-400 uppercase tracking-wider">Password</label>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                    <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
                       minLength={6}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full rounded-xl border border-white/[0.06] bg-white/[0.04] py-3 pl-11 pr-11 text-sm text-white placeholder-gray-500 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:bg-white/[0.06]"
+                      className="block w-full rounded-xl border border-slate-600 bg-slate-700/50 py-2.5 pl-11 pr-11 text-sm text-white placeholder-slate-500 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                       placeholder="••••••••"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 transition-colors hover:text-purple-400"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-slate-300"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -289,16 +262,16 @@ export function LoginPage() {
               {/* Confirm Password */}
               {(mode === 'invite' || mode === 'signup') && (
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-400 uppercase tracking-wider">Confirm Password</label>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">Confirm Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                    <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
                       minLength={6}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="block w-full rounded-xl border border-white/[0.06] bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-white placeholder-gray-500 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:bg-white/[0.06]"
+                      className="block w-full rounded-xl border border-slate-600 bg-slate-700/50 py-2.5 pl-11 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                       placeholder="••••••••"
                     />
                   </div>
@@ -308,7 +281,7 @@ export function LoginPage() {
               {/* Forgot password */}
               {mode === 'login' && (
                 <div className="flex justify-end">
-                  <button type="button" onClick={() => switchMode('reset')} className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
+                  <button type="button" onClick={() => switchMode('reset')} className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
                     Forgot password?
                   </button>
                 </div>
@@ -316,14 +289,14 @@ export function LoginPage() {
 
               {/* Error */}
               {error && (
-                <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-sm text-red-400 backdrop-blur-sm">
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-sm text-red-400">
                   {error}
                 </div>
               )}
 
               {/* Success */}
               {success && (
-                <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-3.5 text-sm text-green-400 backdrop-blur-sm">
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3.5 text-sm text-emerald-400">
                   {success}
                 </div>
               )}
@@ -332,10 +305,8 @@ export function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="relative flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:from-purple-500 hover:to-indigo-500 hover:shadow-xl hover:shadow-purple-500/30 active:scale-[0.98] disabled:opacity-50"
+                className="relative flex w-full items-center justify-center gap-2.5 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-500 active:scale-[0.98] disabled:opacity-50"
               >
-                {/* Shine effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700" />
                 {loading ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 ) : (
@@ -350,22 +321,22 @@ export function LoginPage() {
               </button>
             </form>
 
-            {/* Google for login mode */}
+            {/* Google for login */}
             {mode === 'login' && (
               <>
-                <div className="relative my-6">
+                <div className="relative my-5">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/[0.06]" />
+                    <div className="w-full border-t border-slate-700" />
                   </div>
                   <div className="relative flex justify-center text-xs">
-                    <span className="bg-[#0a0a1a] px-4 text-gray-500">or continue with</span>
+                    <span className="bg-slate-800 px-4 text-slate-500">or continue with</span>
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleGoogleSignIn}
-                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm font-medium text-gray-300 transition-all hover:bg-white/[0.06] hover:border-white/[0.1] active:scale-[0.98]"
+                  className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-600 bg-slate-700/30 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-700 hover:border-slate-500 active:scale-[0.98]"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -380,19 +351,19 @@ export function LoginPage() {
 
             {/* Switch mode */}
             {mode !== 'reset' && mode !== 'invite' && (
-              <div className="mt-6 text-center">
-                <button onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')} className="text-xs text-gray-500 transition-colors hover:text-purple-400">
+              <div className="mt-5 text-center">
+                <button onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')} className="text-xs text-slate-500 transition-colors hover:text-slate-300">
                   {mode === 'login' ? (
-                    <>Don't have an account? <span className="font-medium text-purple-400">Sign up</span></>
+                    <>Don't have an account? <span className="font-medium text-blue-400">Sign up</span></>
                   ) : (
-                    <>Already have an account? <span className="font-medium text-purple-400">Sign in</span></>
+                    <>Already have an account? <span className="font-medium text-blue-400">Sign in</span></>
                   )}
                 </button>
               </div>
             )}
           </div>
 
-          <p className="mt-6 text-center text-[11px] text-gray-600">
+          <p className="mt-6 text-center text-[11px] text-slate-600">
             Internal team tool. Contact admin for access.
           </p>
         </div>
